@@ -9,6 +9,8 @@
 | 실행(프로덕션형) | `docker compose up --build` (MySQL + API + Nginx 정적 빌드) |
 | 실행(개발·핫리로드) | `docker compose -f docker-compose.dev.yml up --build` |
 
+**테스트**(백엔드 Gradle · 프론트 Vitest · E2E Playwright) 실행 절차는 [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md#project-testing)를 참고하세요.
+
 ---
 
 ## 저장소 구조

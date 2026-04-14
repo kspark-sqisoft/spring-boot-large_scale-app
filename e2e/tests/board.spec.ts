@@ -1,12 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-test.beforeEach(async ({ request }) => {
-  const res = await request.get('/api/v1/health')
-  test.skip(
-    res.status() !== 200,
-    '풀스택이 필요합니다. 예: docker compose -f docker-compose.dev.yml up (프론트 5173, API 프록시 → 백엔드)',
-  )
-})
+import { gateTestsOnHealth } from './helpers'
+
+gateTestsOnHealth()
 
 test('게시글 목록 화면이 로드된다', async ({ page }) => {
   await page.goto('/posts')
