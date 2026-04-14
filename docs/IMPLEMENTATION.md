@@ -128,7 +128,7 @@ docker compose -f docker-compose.dev.yml up --build
 - [x] 게시글 작성·수정 시 `imageFileIds`(본인 업로드 파일만), 응답에 `images`
 - [x] `GET/PATCH /api/v1/users/me` — 표시 이름·프로필 이미지
 - [x] 프론트: 게시글 이미지 첨부·표시, 프로필 페이지, 헤더 링크
-- [x] Compose: `APP_UPLOAD_DIR` + 업로드 볼륨(`docker-compose.dev.yml` / `docker-compose.yml`)
+- [x] Compose: `APP_UPLOAD_DIR` — 개발은 호스트 `./data/uploads` 바인드 마운트(재시작·`down -v`로 이름 붙은 볼륨이 사라져도 업로드 유지), 프로덕션형은 `upload_data` 볼륨
 
 **후속(로드맵 19~27 보충)**: 객체 스토리지(S3), 게시글 삭제 시 고아 파일 정리, 다운로드 `Content-Disposition`·권한 세분화 등.
 
@@ -170,16 +170,49 @@ docker compose -f docker-compose.dev.yml up --build
 
 ---
 
-## 단계 6 이후
+## 단계 6 — 조회수 · Redis (1차 완료)
 
-조회수(Redis) → 인기글(Kafka) → CQRS·캐시 순으로, 매 단계마다 **Compose에 서비스 추가**와 **이 문서에 체크**를 맞춥니다.
+로드맵 **섹션 5** 항목 44~45에 해당하는 1차 범위(카운터 저장·표시)입니다. 어뷰징 방지(46~47)는 후속입니다.
+
+- [x] `spring-boot-starter-data-redis` + 기본 `RedisAutoConfiguration` 제외 후, `app.redis.enabled=true` 일 때만 Lettuce `StringRedisTemplate` 구성 (`RedisPostViewConfiguration`)
+- [x] `PostViewService`: Redis 시 `INCR board:views:post:{id}` / `MGET` 배치, 비활성 시 `NoopPostViewService`(항상 0)
+- [x] `GET /api/v1/posts/{id}` 한 번 호출마다 조회수 증가 후 응답의 `viewCount`에 반영 · 목록은 증가 없이 Redis 값만 조회
+- [x] `application.yml`: `APP_REDIS_ENABLED`, `APP_REDIS_VIEW_HOST` / `PORT` — 테스트는 `application-test.yml`에서 `app.redis.enabled: false`
+- [x] Compose: `redis:7.4-alpine`, 백엔드 `depends_on` + `APP_REDIS_ENABLED=true` (`docker-compose.dev.yml`, `docker-compose.yml`)
+- [x] 프론트: `PostDto.viewCount`, 목록·상세 메타에 조회 수 표시
+
+**후속**: 동일 사용자/세션·IP 윈도우 내 중복 집계 방지, Redis 장애 시 폴백, MySQL 비동기 동기화 등.
+
+---
+
+## 단계 7 — 인기글 · Kafka (1차 완료)
+
+로드맵 **섹션 6**에 가까운 1차 범위: 조회 이벤트를 Kafka로 발행하고, Consumer가 Redis ZSET으로 점수를 올린 뒤 `GET /posts/popular`로 조회합니다.
+
+- [x] `spring-kafka`, `KafkaAutoConfiguration` 제외 + `app.kafka.enabled=true` 일 때만 `KafkaBoardConfiguration` (`KafkaTemplate`, consumer factory, `NewTopic` `board.post.viewed`)
+- [x] `PostViewEventPublisher` — Kafka off 시 `NoopPostViewEventPublisher`, on 시 `KafkaPostViewEventPublisher` (`PostViewedEvent` JSON)
+- [x] `GET /api/v1/posts/{id}` 응답 직전 `publishPostViewed` (조회수 증가와 별도 파이프라인)
+- [x] `PostViewKafkaConsumer` → `PopularPostsScoreWriter` — Redis on 시 `ZINCRBY board:popular:posts`, off 시 No-op
+- [x] `GET /api/v1/posts/popular?limit=` — Redis on일 때 ZSET 역순으로 `Post` 로드(없으면 `[]`). 라우팅 순서: `/popular`를 `/{postId}` 위에 둠
+- [x] `application.yml` / `application-test.yml`: `APP_KAFKA_*`, 테스트는 Kafka off
+- [x] `docker-compose.dev.yml`: Redpanda + `APP_KAFKA_ENABLED=true`, `APP_KAFKA_BOOTSTRAP_SERVERS=redpanda:9092`. 기본 `docker-compose.yml`은 Kafka 기본 off, 브로커는 필요 시 별도 기동
+- [x] 프론트: `/posts/popular`, `fetchPopularPosts`, 헤더「인기」
+- [x] 테스트: `PostPopularEndpointTests` (Redis off 시 빈 배열)
+
+**후속**: 토픽 파티션·재처리·DLQ, 인기 점수 가중치(좋아요 등), Kafka 미가용 시 백프레셔/폴백.
+
+---
+
+## 단계 8 이후
+
+CQRS·캐시 등 로드맵 후속 단계는 매 단계마다 **Compose**와 **이 문서**를 함께 갱신합니다.
 
 ---
 
 ## 로컬 개발 (Compose 없이)
 
 1. MySQL만 Compose로 실행: `docker compose up mysql -d` (호스트에서 접속 시 **3307** → 컨테이너 3306)
-2. 백엔드: `cd backend && ./gradlew bootRun` — 로컬 DB가 3306이면 그대로 두고, Compose MySQL만 쓸 경우 `application.yml`의 URL을 `localhost:3307`로 맞출 것
+2. 백엔드: `cd backend && ./gradlew bootRun` — 로컬 DB가 3306이면 그대로 두고, Compose MySQL만 쓸 경우 `application.yml`의 URL을 `localhost:3307`로 맞출 것. 조회수 Redis를 쓰려면 로컬 Redis + `APP_REDIS_ENABLED=true`(또는 Compose 풀스택).
 3. 프론트: `cd frontend && npm run dev` → `http://localhost:5173` (Vite가 `/api` 프록시)
 
 ---
@@ -191,3 +224,5 @@ docker compose -f docker-compose.dev.yml up --build
 | 2026-04-14 | 초기 스택 구동 확인: `docker compose up --build`, MySQL 호스트 포트 **3307** (로컬 3306 충돌 회피), `/api/v1/health` 직접·Nginx 프록시 모두 OK |
 | 2026-04-14 | 로드맵 **섹션 3(댓글)** 1차: Flyway `V5`, `post_comments`, REST CRUD·2-depth 제한, 상세 페이지 댓글 UI, `CommentEndpointTests` |
 | 2026-04-14 | 로드맵 **섹션 4(좋아요)** 1차: Flyway `V6`, `post_likes`, POST/DELETE likes, `PostResponse` 집계 필드, `PostLikeEndpointTests` |
+| 2026-04-14 | 로드맵 **섹션 5(조회수)** 1차: Redis 조회 카운터, `viewCount`, Compose `redis` 서비스, 비활성 시 No-op |
+| 2026-04-14 | 로드맵 **섹션 6(인기·Kafka)** 1차: `PostViewed` 토픽, Redis ZSET 인기, `GET /posts/popular`, dev Compose Redpanda |

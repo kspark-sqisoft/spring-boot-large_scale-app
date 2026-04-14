@@ -71,7 +71,8 @@ export function PostListPage() {
                     <p className="text-xs text-muted-foreground">
                       {new Date(post.createdAt).toLocaleString('ko-KR')}
                       {' · '}
-                      좋아요 {post.likeCount} · 댓글 {post.commentCount}
+                      좋아요 {post.likeCount} · 댓글 {post.commentCount} · 조회{' '}
+                      {post.viewCount}
                     </p>
                   </Link>
                 </CardHeader>

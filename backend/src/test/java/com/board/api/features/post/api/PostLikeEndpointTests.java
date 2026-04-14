@@ -35,7 +35,8 @@ class PostLikeEndpointTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.likeCount").value(0))
 				.andExpect(jsonPath("$.commentCount").value(0))
-				.andExpect(jsonPath("$.likedByMe").value(false));
+				.andExpect(jsonPath("$.likedByMe").value(false))
+				.andExpect(jsonPath("$.viewCount").value(0));
 
 		mockMvc.perform(post("/api/v1/posts/" + postId + "/likes")
 						.header("Authorization", "Bearer " + access))
@@ -47,7 +48,8 @@ class PostLikeEndpointTests {
 						.header("Authorization", "Bearer " + access))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.likeCount").value(1))
-				.andExpect(jsonPath("$.likedByMe").value(true));
+				.andExpect(jsonPath("$.likedByMe").value(true))
+				.andExpect(jsonPath("$.viewCount").value(0));
 
 		mockMvc.perform(post("/api/v1/posts/" + postId + "/likes")
 						.header("Authorization", "Bearer " + access))

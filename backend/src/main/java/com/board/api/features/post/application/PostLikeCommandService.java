@@ -2,6 +2,8 @@ package com.board.api.features.post.application;
 
 import java.time.Instant;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,8 @@ import com.board.api.features.post.infrastructure.persistence.PostRepository;
 
 @Service
 public class PostLikeCommandService {
+
+	private static final Logger log = LoggerFactory.getLogger(PostLikeCommandService.class);
 
 	private final PostRepository postRepository;
 	private final PostLikeRepository postLikeRepository;
@@ -34,23 +38,35 @@ public class PostLikeCommandService {
 	public PostLikeStatusResponse like(long postId, long userId) {
 		ensurePostExists(postId);
 		if (postLikeRepository.existsByPostIdAndUserId(postId, userId)) {
-			return status(postId, userId);
+			return readStatus(postId, userId);
 		}
 		try {
-			PostLike row = new PostLike(idGenerator.nextId(), postId, userId, Instant.now());
-			postLikeRepository.save(row);
+			postLikeRepository.saveAndFlush(new PostLike(
+					idGenerator.nextId(),
+					postId,
+					userId,
+					Instant.now()));
 		}
-		catch (DataIntegrityViolationException ignored) {
-			/* 동시 요청으로 UNIQUE 충돌 시 멱등 처리 */
+		catch (DataIntegrityViolationException e) {
+			if (isDuplicateLikeRow(e)) {
+				/* 동시 요청 등으로 (post_id, user_id) 유니크 충돌 */
+			}
+			else {
+				log.warn("post like persist failed postId={} userId={}: {}", postId, userId, e.getMostSpecificCause().getMessage());
+				throw new ApiException(
+						HttpStatus.BAD_REQUEST,
+						"LIKE_PERSIST_FAILED",
+						"좋아요를 저장할 수 없습니다. 로그인 계정과 게시글이 유효한지 확인해 주세요.");
+			}
 		}
-		return status(postId, userId);
+		return readStatus(postId, userId);
 	}
 
 	@Transactional
 	public PostLikeStatusResponse unlike(long postId, long userId) {
 		ensurePostExists(postId);
 		postLikeRepository.deleteByPostIdAndUserId(postId, userId);
-		return status(postId, userId);
+		return readStatus(postId, userId);
 	}
 
 	private void ensurePostExists(long postId) {
@@ -59,9 +75,17 @@ public class PostLikeCommandService {
 		}
 	}
 
-	private PostLikeStatusResponse status(long postId, long userId) {
+	private PostLikeStatusResponse readStatus(long postId, long userId) {
 		long count = postLikeRepository.countByPostId(postId);
 		boolean liked = postLikeRepository.existsByPostIdAndUserId(postId, userId);
 		return new PostLikeStatusResponse(count, liked);
+	}
+
+	private static boolean isDuplicateLikeRow(DataIntegrityViolationException e) {
+		String msg = String.valueOf(e.getMostSpecificCause().getMessage());
+		String lower = msg.toLowerCase();
+		return lower.contains("duplicate")
+				|| lower.contains("unique")
+				|| lower.contains("uk_post_likes_post_user");
 	}
 }

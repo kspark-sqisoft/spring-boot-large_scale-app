@@ -1,4 +1,8 @@
 app:
+  redis:
+    enabled: false
+  kafka:
+    enabled: false
   jwt:
     secret: test-jwt-secret-for-hs256-must-be-long-enough-string
   security:

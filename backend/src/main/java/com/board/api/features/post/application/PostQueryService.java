@@ -33,16 +33,19 @@ public class PostQueryService {
 	private final PostImageRepository postImageRepository;
 	private final CommentRepository commentRepository;
 	private final PostLikeRepository postLikeRepository;
+	private final PostViewService postViewService;
 
 	public PostQueryService(
 			PostRepository postRepository,
 			PostImageRepository postImageRepository,
 			CommentRepository commentRepository,
-			PostLikeRepository postLikeRepository) {
+			PostLikeRepository postLikeRepository,
+			PostViewService postViewService) {
 		this.postRepository = postRepository;
 		this.postImageRepository = postImageRepository;
 		this.commentRepository = commentRepository;
 		this.postLikeRepository = postLikeRepository;
+		this.postViewService = postViewService;
 	}
 
 	@Transactional(readOnly = true)
@@ -70,19 +73,25 @@ public class PostQueryService {
 
 	@Transactional(readOnly = true)
 	public PostResponse buildResponse(Post post, Long viewerUserId) {
+		long views = postViewService.getCount(post.getId());
+		return buildResponse(post, viewerUserId, views);
+	}
+
+	@Transactional(readOnly = true)
+	public PostResponse buildResponse(Post post, Long viewerUserId, long viewCount) {
 		long postId = post.getId();
 		List<PostImageResponse> images = imageResponsesForPost(postId);
 		long likes = postLikeRepository.countByPostId(postId);
 		long comments = commentRepository.countByPostId(postId);
 		boolean liked = viewerUserId != null
 				&& postLikeRepository.existsByPostIdAndUserId(postId, viewerUserId);
-		return PostResponse.from(post, images, likes, comments, liked);
+		return PostResponse.from(post, images, likes, comments, liked, viewCount);
 	}
 
 	@Transactional(readOnly = true)
-	public PostResponse getDetail(long postId, Long viewerUserId) {
+	public PostResponse getDetailWithViewCount(long postId, Long viewerUserId, long viewCount) {
 		Post post = getById(postId);
-		return buildResponse(post, viewerUserId);
+		return buildResponse(post, viewerUserId, viewCount);
 	}
 
 	@Transactional(readOnly = true)
@@ -95,6 +104,7 @@ public class PostQueryService {
 		List<Long> ids = content.stream().map(Post::getId).toList();
 		Map<Long, Long> likeMap = toCountMap(postLikeRepository.countGroupedByPostId(ids));
 		Map<Long, Long> commentMap = toCountMap(commentRepository.countGroupedByPostId(ids));
+		Map<Long, Long> viewMap = postViewService.getCounts(ids);
 		Set<Long> likedSet = new HashSet<>();
 		if (viewerUserId != null) {
 			likedSet.addAll(postLikeRepository.findPostIdsLikedByUser(viewerUserId, ids));
@@ -103,8 +113,9 @@ public class PostQueryService {
 			long pid = p.getId();
 			long lc = likeMap.getOrDefault(pid, 0L);
 			long cc = commentMap.getOrDefault(pid, 0L);
+			long vc = viewMap.getOrDefault(pid, 0L);
 			boolean lk = likedSet.contains(pid);
-			return PostResponse.from(p, imageResponsesForPost(pid), lc, cc, lk);
+			return PostResponse.from(p, imageResponsesForPost(pid), lc, cc, lk, vc);
 		});
 	}
 

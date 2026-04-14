@@ -18,6 +18,11 @@ export function fetchPostsPage(page: number, size: number): Promise<PostPageDto>
   return getJson<PostPageDto>(`/posts?${q.toString()}`)
 }
 
+export function fetchPopularPosts(limit: number): Promise<PostDto[]> {
+  const q = new URLSearchParams({ limit: String(limit) })
+  return getJson<PostDto[]>(`/posts/popular?${q.toString()}`)
+}
+
 export function fetchPost(id: string): Promise<PostDto> {
   return getJson<PostDto>(`/posts/${encodeURIComponent(id)}`)
 }

@@ -21,6 +21,42 @@ services:
       retries: 20
       start_period: 15s
 
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+      - --smp
+      - "1"
+      - --memory
+      - 512M
+      - --mode
+      - dev-container
+      - --default-log-level=warn
+    ports:
+      - "19092:19092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 40s
+
   backend:
     build:
       context: ./backend
@@ -28,10 +64,11 @@ services:
     volumes:
       - ./backend:/app
       - gradle_dev_cache:/gradle-cache
-      - upload_dev_data:/data/uploads
+      # 업로드는 호스트 ./data/uploads 에 두어 compose down -v / 볼륨 삭제 시에도 파일이 남도록 함 (이름 붙은 볼륨만 쓰면 재생성 시 이미지 404)
+      - ./data/uploads:/data/uploads
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/board?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/board?useSSL=false&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_0900_ai_ci&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: board
       SPRING_DATASOURCE_PASSWORD: board
       APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
@@ -40,6 +77,11 @@ services:
       APP_SECURITY_INITIAL_ADMIN_EMAIL: admin@board.local
       APP_SECURITY_INITIAL_ADMIN_PASSWORD: ChangeMe_Admin_1
       APP_UPLOAD_DIR: /data/uploads
+      APP_REDIS_ENABLED: "true"
+      APP_REDIS_VIEW_HOST: redis
+      APP_REDIS_VIEW_PORT: "6379"
+      APP_KAFKA_ENABLED: "true"
+      APP_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
     ports:
       - "8080:8080"
     healthcheck:
@@ -50,6 +92,10 @@ services:
       start_period: 120s
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redpanda:
         condition: service_healthy
 
   # node_modules는 ./frontend 에 두어 package.json 변경이 바로 반영되게 함(별도 볼륨은 오래된 의존성으로 Vite resolve 실패를 유발할 수 있음)
@@ -71,4 +117,3 @@ services:
 volumes:
   mysql_dev_data:
   gradle_dev_cache:
-  upload_dev_data:

@@ -35,6 +35,8 @@ class PostQueryServiceTest {
 	private CommentRepository commentRepository;
 	@Mock
 	private PostLikeRepository postLikeRepository;
+	@Mock
+	private PostViewService postViewService;
 
 	@InjectMocks
 	private PostQueryService postQueryService;

@@ -38,6 +38,9 @@ export function AppHeader() {
           <NavLink to="/posts" className={navLinkClass} end>
             게시글
           </NavLink>
+          <NavLink to="/posts/popular" className={navLinkClass}>
+            인기
+          </NavLink>
           {accessToken ? (
             <NavLink to="/posts/new" className={navLinkClass}>
               작성

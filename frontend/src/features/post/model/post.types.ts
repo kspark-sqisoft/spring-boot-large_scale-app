@@ -5,6 +5,8 @@ export type PostImageDto = {
 
 export type PostDto = {
   id: string
+  /** 작성자 user id (문자열). 레거시·마이그레이션 전 글은 null */
+  authorUserId: string | null
   title: string
   content: string
   createdAt: string
@@ -13,6 +15,7 @@ export type PostDto = {
   likeCount: number
   commentCount: number
   likedByMe: boolean
+  viewCount: number
 }
 
 export type PostLikeStatusDto = {

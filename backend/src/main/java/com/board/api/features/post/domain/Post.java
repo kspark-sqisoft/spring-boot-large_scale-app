@@ -14,6 +14,9 @@ public class Post {
 	@Id
 	private Long id;
 
+	@Column(name = "author_user_id")
+	private Long authorUserId;
+
 	@Column(nullable = false, length = 500)
 	private String title;
 
@@ -29,8 +32,9 @@ public class Post {
 	protected Post() {
 	}
 
-	public Post(Long id, String title, String content, Instant createdAt, Instant updatedAt) {
+	public Post(Long id, Long authorUserId, String title, String content, Instant createdAt, Instant updatedAt) {
 		this.id = id;
+		this.authorUserId = authorUserId;
 		this.title = title;
 		this.content = content;
 		this.createdAt = createdAt;
@@ -38,12 +42,20 @@ public class Post {
 	}
 
 	public static Post create(Long id, String title, String content) {
+		return create(id, null, title, content);
+	}
+
+	public static Post create(Long id, Long authorUserId, String title, String content) {
 		Instant now = Instant.now();
-		return new Post(id, title, content, now, now);
+		return new Post(id, authorUserId, title, content, now, now);
 	}
 
 	public Long getId() {
 		return id;
+	}
+
+	public Long getAuthorUserId() {
+		return authorUserId;
 	}
 
 	public String getTitle() {

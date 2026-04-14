@@ -7,6 +7,7 @@ import com.board.api.features.post.domain.Post;
 
 public record PostResponse(
 		String id,
+		String authorUserId,
 		String title,
 		String content,
 		Instant createdAt,
@@ -14,7 +15,8 @@ public record PostResponse(
 		List<PostImageResponse> images,
 		long likeCount,
 		long commentCount,
-		boolean likedByMe
+		boolean likedByMe,
+		long viewCount
 ) {
 
 	public static PostResponse from(
@@ -22,9 +24,12 @@ public record PostResponse(
 			List<PostImageResponse> images,
 			long likeCount,
 			long commentCount,
-			boolean likedByMe) {
+			boolean likedByMe,
+			long viewCount) {
+		String author = post.getAuthorUserId() == null ? null : Long.toString(post.getAuthorUserId());
 		return new PostResponse(
 				Long.toString(post.getId()),
+				author,
 				post.getTitle(),
 				post.getContent(),
 				post.getCreatedAt(),
@@ -32,6 +37,7 @@ public record PostResponse(
 				images == null ? List.of() : images,
 				likeCount,
 				commentCount,
-				likedByMe);
+				likedByMe,
+				viewCount);
 	}
 }

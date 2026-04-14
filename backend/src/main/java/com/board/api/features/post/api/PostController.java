@@ -2,7 +2,9 @@ package com.board.api.features.post.api;
 
 import java.util.List;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,9 +28,12 @@ import com.board.api.features.post.api.dto.PostLikeStatusResponse;
 import com.board.api.features.post.api.dto.PostPageResponse;
 import com.board.api.features.post.api.dto.PostResponse;
 import com.board.api.features.post.api.dto.UpdatePostRequest;
+import com.board.api.features.post.application.PopularPostsQueryService;
 import com.board.api.features.post.application.PostCommandService;
 import com.board.api.features.post.application.PostLikeCommandService;
 import com.board.api.features.post.application.PostQueryService;
+import com.board.api.features.post.application.PostViewEventPublisher;
+import com.board.api.features.post.application.PostViewService;
 import com.board.api.features.post.domain.Post;
 
 @RestController
@@ -38,14 +43,23 @@ public class PostController {
 	private final PostCommandService postCommandService;
 	private final PostQueryService postQueryService;
 	private final PostLikeCommandService postLikeCommandService;
+	private final PostViewService postViewService;
+	private final PostViewEventPublisher postViewEventPublisher;
+	private final PopularPostsQueryService popularPostsQueryService;
 
 	public PostController(
 			PostCommandService postCommandService,
 			PostQueryService postQueryService,
-			PostLikeCommandService postLikeCommandService) {
+			PostLikeCommandService postLikeCommandService,
+			PostViewService postViewService,
+			PostViewEventPublisher postViewEventPublisher,
+			PopularPostsQueryService popularPostsQueryService) {
 		this.postCommandService = postCommandService;
 		this.postQueryService = postQueryService;
 		this.postLikeCommandService = postLikeCommandService;
+		this.postViewService = postViewService;
+		this.postViewEventPublisher = postViewEventPublisher;
+		this.popularPostsQueryService = popularPostsQueryService;
 	}
 
 	@PostMapping
@@ -59,9 +73,21 @@ public class PostController {
 		return postQueryService.buildResponse(post, principal.getUserId());
 	}
 
+	@GetMapping("/popular")
+	public List<PostResponse> popular(
+			@RequestParam(defaultValue = "10") int limit,
+			Authentication authentication) {
+		return popularPostsQueryService.listPopular(limit, viewerId(authentication));
+	}
+
 	@GetMapping("/{postId}")
-	public PostResponse get(@PathVariable long postId, Authentication authentication) {
-		return postQueryService.getDetail(postId, viewerId(authentication));
+	public ResponseEntity<PostResponse> get(@PathVariable long postId, Authentication authentication) {
+		long viewCount = postViewService.incrementAndGet(postId);
+		postViewEventPublisher.publishPostViewed(postId);
+		PostResponse body = postQueryService.getDetailWithViewCount(postId, viewerId(authentication), viewCount);
+		return ResponseEntity.ok()
+				.cacheControl(CacheControl.noStore())
+				.body(body);
 	}
 
 	@GetMapping
@@ -84,6 +110,7 @@ public class PostController {
 		Post post = postCommandService.update(
 				postId,
 				principal.getUserId(),
+				principal.getRole(),
 				request.title(),
 				request.content(),
 				imageIdsOrNull);
@@ -93,8 +120,10 @@ public class PostController {
 	@DeleteMapping("/{postId}")
 	@PreAuthorize("isAuthenticated()")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void delete(@PathVariable long postId) {
-		postCommandService.delete(postId);
+	public void delete(
+			@AuthenticationPrincipal AppUserDetails principal,
+			@PathVariable long postId) {
+		postCommandService.delete(postId, principal.getUserId(), principal.getRole());
 	}
 
 	@PostMapping("/{postId}/likes")

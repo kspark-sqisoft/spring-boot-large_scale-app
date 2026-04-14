@@ -5,4 +5,5 @@ export const postKeys = {
     [...postKeys.lists(), page, size] as const,
   details: () => [...postKeys.all, 'detail'] as const,
   detail: (id: string) => [...postKeys.details(), id] as const,
+  popular: (limit: number) => [...postKeys.all, 'popular', limit] as const,
 }

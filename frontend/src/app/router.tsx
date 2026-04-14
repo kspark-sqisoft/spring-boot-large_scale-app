@@ -14,6 +14,7 @@ import {
   PostDetailPage,
   PostEditPage,
   PostListPage,
+  PostPopularPage,
 } from '@/features/post'
 import { AppLayout } from '@/widgets/app-layout'
 
@@ -26,6 +27,7 @@ export const appRouter = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'posts', element: <PostListPage /> },
+      { path: 'posts/popular', element: <PostPopularPage /> },
       {
         path: 'posts/new',
         element: (
