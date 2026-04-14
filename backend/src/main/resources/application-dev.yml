@@ -1,0 +1,10 @@
+# 로컬·Docker 볼륨 마운트에서 파일 감지가 느릴 때 폴링으로 보완
+app:
+  security:
+    bootstrap-admin: ${APP_SECURITY_BOOTSTRAP_ADMIN:true}
+
+spring:
+  devtools:
+    restart:
+      poll-interval: 2s
+      quiet-period: 1s

@@ -1,0 +1,9 @@
+FROM eclipse-temurin:21-jdk-alpine
+RUN apk add --no-cache bash tini curl
+WORKDIR /app
+ENV GRADLE_USER_HOME=/gradle-cache
+COPY dev-entrypoint.sh /usr/local/bin/dev-entrypoint.sh
+RUN chmod +x /usr/local/bin/dev-entrypoint.sh
+EXPOSE 8080
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["/usr/local/bin/dev-entrypoint.sh"]

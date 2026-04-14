@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: board-api
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  datasource:
+    url: jdbc:mysql://localhost:3306/board?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+    username: board
+    password: board
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  upload:
+    dir: ${APP_UPLOAD_DIR:./data/uploads}
+  jwt:
+    secret: ${APP_JWT_SECRET:dev-only-change-this-secret-32chars-min!!}
+    access-expiration-minutes: 15
+    refresh-expiration-days: 7
+  security:
+    bootstrap-admin: false
+    initial-admin-email: admin@board.local
+    initial-admin-password: ChangeMe_Admin_1
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

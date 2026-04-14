@@ -1,0 +1,4 @@
+export { PostCreatePage } from './ui/post-create-page'
+export { PostDetailPage } from './ui/post-detail-page'
+export { PostEditPage } from './ui/post-edit-page'
+export { PostListPage } from './ui/post-list-page'
