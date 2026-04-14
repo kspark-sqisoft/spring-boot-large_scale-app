@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,7 +41,10 @@ class PostEndpointTests {
 	void crud_flow() throws Exception {
 		mockMvc.perform(get("/api/v1/posts"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.totalElements").value(0));
+				.andExpect(jsonPath("$.content.length()").value(0))
+				.andExpect(jsonPath("$.nextCursor").value(nullValue()))
+				.andExpect(jsonPath("$.size").value(0))
+				.andExpect(jsonPath("$.hasNext").value(false));
 
 		MvcResult created = mockMvc.perform(post("/api/v1/posts")
 						.with(user(writerPrincipal()))
@@ -92,10 +96,15 @@ class PostEndpointTests {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"title\":\"목록용\",\"content\":\"c\"}"));
 
-		mockMvc.perform(get("/api/v1/posts?page=0&size=10"))
+		mockMvc.perform(get("/api/v1/posts?size=10"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.content").isArray())
-				.andExpect(jsonPath("$.totalElements").value(1))
-				.andExpect(jsonPath("$.content[0].title").value("목록용"));
+				.andExpect(jsonPath("$.content.length()").value(1))
+				.andExpect(jsonPath("$.content[0].title").value("목록용"))
+				.andExpect(jsonPath("$.nextCursor").value(nullValue()))
+				.andExpect(jsonPath("$.hasNext").value(false));
+
+		mockMvc.perform(get("/api/v1/posts?cursor=!!!"))
+				.andExpect(status().isBadRequest());
 	}
 }

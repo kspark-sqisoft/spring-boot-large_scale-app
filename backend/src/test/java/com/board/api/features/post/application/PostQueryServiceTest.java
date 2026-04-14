@@ -56,35 +56,24 @@ class PostQueryServiceTest {
 	}
 
 	@Test
-	void list_clamps_page_size_to_max_100() {
-		Pageable expected = PageRequest.of(0, 100);
-		when(postRepository.findAllByOrderByCreatedAtDesc(expected))
+	void listByCursor_clamps_page_size_to_max_100() {
+		Pageable expected = PageRequest.of(0, 101);
+		when(postRepository.findAllByOrderByCreatedAtDescIdDesc(expected))
 				.thenReturn(new PageImpl<>(List.of()));
 
-		postQueryService.list(0, 500);
+		postQueryService.listPostsByCursor(null, 500, null);
 
-		verify(postRepository).findAllByOrderByCreatedAtDesc(expected);
+		verify(postRepository).findAllByOrderByCreatedAtDescIdDesc(expected);
 	}
 
 	@Test
-	void list_clamps_negative_size_to_1() {
-		Pageable expected = PageRequest.of(0, 1);
-		when(postRepository.findAllByOrderByCreatedAtDesc(expected))
+	void listByCursor_clamps_negative_size_to_1() {
+		Pageable expected = PageRequest.of(0, 2);
+		when(postRepository.findAllByOrderByCreatedAtDescIdDesc(expected))
 				.thenReturn(new PageImpl<>(List.of()));
 
-		postQueryService.list(0, -5);
+		postQueryService.listPostsByCursor(null, -5, null);
 
-		verify(postRepository).findAllByOrderByCreatedAtDesc(expected);
-	}
-
-	@Test
-	void list_clamps_negative_page_to_zero() {
-		Pageable expected = PageRequest.of(0, 20);
-		when(postRepository.findAllByOrderByCreatedAtDesc(expected))
-				.thenReturn(new PageImpl<>(List.of()));
-
-		postQueryService.list(-3, 20);
-
-		verify(postRepository).findAllByOrderByCreatedAtDesc(expected);
+		verify(postRepository).findAllByOrderByCreatedAtDescIdDesc(expected);
 	}
 }

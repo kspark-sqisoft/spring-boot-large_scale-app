@@ -4,7 +4,8 @@ import { toast } from 'sonner'
 
 import { PostCommentsSection } from '@/features/comment'
 import { deletePost, fetchPost, likePost, unlikePost } from '@/features/post/api/post-api'
-import type { PostDto, PostPageDto } from '@/features/post/model/post.types'
+import type { PostDto } from '@/features/post/model/post.types'
+import { patchPostInInfiniteLists } from '@/features/post/lib/patch-post-in-lists'
 import { useAuthStore } from '@/shared/store/auth-store'
 import { postKeys } from '@/features/post/api/post-keys'
 import { Button } from '@/shared/ui/button'
@@ -65,6 +66,7 @@ export function PostDetailPage() {
     onMutate: async (likedAfterClick: boolean) => {
       await queryClient.cancelQueries({ queryKey: postKeys.detail(postId!) })
       const previous = queryClient.getQueryData<PostDto>(postKeys.detail(postId!))
+      const prevLists = queryClient.getQueriesData({ queryKey: postKeys.lists() })
       if (previous) {
         const prevCount = Number(previous.likeCount)
         let likeCount = prevCount
@@ -75,24 +77,23 @@ export function PostDetailPage() {
         }
         const next = { ...previous, likedByMe: likedAfterClick, likeCount }
         queryClient.setQueryData(postKeys.detail(postId!), next)
-        queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
-          if (!old?.content?.length) {
-            return old
-          }
-          const idx = old.content.findIndex((p) => String(p.id) === String(postId))
-          if (idx === -1) {
-            return old
-          }
-          const content = [...old.content]
-          content[idx] = { ...content[idx], likedByMe: likedAfterClick, likeCount }
-          return { ...old, content }
-        })
+        queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old) =>
+          patchPostInInfiniteLists(old, postId!, {
+            likedByMe: likedAfterClick,
+            likeCount,
+          }),
+        )
       }
-      return { previous }
+      return { previous, prevLists }
     },
     onError: (e: Error, _v, context) => {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(postKeys.detail(postId!), context.previous)
+      }
+      if (context?.prevLists) {
+        for (const [key, data] of context.prevLists) {
+          queryClient.setQueryData(key, data)
+        }
       }
       void queryClient.invalidateQueries({ queryKey: postKeys.lists() })
       toast.error(e.message)
@@ -111,19 +112,9 @@ export function PostDetailPage() {
           likedByMe: liked,
         }
       })
-      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
-        if (!old?.content?.length) {
-          return old
-        }
-        return {
-          ...old,
-          content: old.content.map((p) =>
-            String(p.id) === String(postId)
-              ? { ...p, likeCount: count, likedByMe: liked }
-              : p,
-          ),
-        }
-      })
+      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old) =>
+        patchPostInInfiniteLists(old, postId!, { likeCount: count, likedByMe: liked }),
+      )
       // POST 응답이 집계의 근거. 직후 GET refetch는 캐시/프록시·스냅샷 타이밍으로 이전 값을 덮을 수 있음
     },
   })

@@ -70,6 +70,7 @@ async function apiRequest(
   }
   const res = await fetch(buildApiUrl(path), {
     ...init,
+    cache: init.cache ?? 'no-store',
     headers,
     credentials: 'include',
   })
@@ -221,6 +222,7 @@ async function fetchWithAuthRetry(
   }
   const res = await fetch(buildApiUrl(path), {
     ...init,
+    cache: init.cache ?? 'no-store',
     headers,
     credentials: 'include',
   })

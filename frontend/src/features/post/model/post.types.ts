@@ -23,12 +23,13 @@ export type PostLikeStatusDto = {
   likedByMe: boolean
 }
 
-export type PostPageDto = {
+/** GET /posts 커서 페이지 (무한 스크롤) */
+export type PostCursorPageDto = {
   content: PostDto[]
-  page: number
+  nextCursor: string | null
   size: number
-  totalElements: number
-  totalPages: number
+  /** 서버 기준 다음 페이지 존재 여부(클라이언트는 이 값으로 더보기 노출) */
+  hasNext: boolean
 }
 
 export type CreatePostBody = {

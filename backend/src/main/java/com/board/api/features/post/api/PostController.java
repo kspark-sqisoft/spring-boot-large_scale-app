@@ -25,7 +25,7 @@ import jakarta.validation.Valid;
 import com.board.api.common.security.AppUserDetails;
 import com.board.api.features.post.api.dto.CreatePostRequest;
 import com.board.api.features.post.api.dto.PostLikeStatusResponse;
-import com.board.api.features.post.api.dto.PostPageResponse;
+import com.board.api.features.post.api.dto.PostCursorPageResponse;
 import com.board.api.features.post.api.dto.PostResponse;
 import com.board.api.features.post.api.dto.UpdatePostRequest;
 import com.board.api.features.post.application.PopularPostsQueryService;
@@ -91,11 +91,14 @@ public class PostController {
 	}
 
 	@GetMapping
-	public PostPageResponse list(
-			@RequestParam(defaultValue = "0") int page,
+	public ResponseEntity<PostCursorPageResponse> list(
+			@RequestParam(required = false) String cursor,
 			@RequestParam(defaultValue = "20") int size,
 			Authentication authentication) {
-		return postQueryService.listPosts(page, size, viewerId(authentication));
+		PostCursorPageResponse body = postQueryService.listPostsByCursor(cursor, size, viewerId(authentication));
+		return ResponseEntity.ok()
+				.cacheControl(CacheControl.noStore())
+				.body(body);
 	}
 
 	@PutMapping("/{postId}")

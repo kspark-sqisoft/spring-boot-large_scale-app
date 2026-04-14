@@ -11,7 +11,8 @@ import {
 import { commentKeys } from '@/features/comment/api/comment-keys'
 import { postKeys } from '@/features/post/api/post-keys'
 import type { CommentDto, CommentListDto } from '@/features/comment/model/comment.types'
-import type { PostDto, PostPageDto } from '@/features/post/model/post.types'
+import { patchPostInInfiniteLists } from '@/features/post/lib/patch-post-in-lists'
+import type { PostDto } from '@/features/post/model/post.types'
 import { useAuthStore } from '@/shared/store/auth-store'
 import { Button } from '@/shared/ui/button'
 import {
@@ -68,7 +69,7 @@ export function PostCommentsSection({ postId }: { postId: string }) {
       await queryClient.cancelQueries({ queryKey: commentKeys.post(postId) })
       const prevComments = queryClient.getQueryData<CommentListDto>(commentKeys.post(postId))
       const prevPost = queryClient.getQueryData<PostDto>(postKeys.detail(postId))
-      const prevLists = queryClient.getQueriesData<PostPageDto>({ queryKey: postKeys.lists() })
+      const prevLists = queryClient.getQueriesData({ queryKey: postKeys.lists() })
       if (!user) {
         return { prevComments, prevPost, prevLists, tempId: '' as const }
       }
@@ -95,16 +96,12 @@ export function PostCommentsSection({ postId }: { postId: string }) {
           commentCount: prevPost.commentCount + 1,
         })
       }
-      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
-        if (!old?.content?.length) {
+      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old) => {
+        const n = queryClient.getQueryData<PostDto>(postKeys.detail(postId))?.commentCount
+        if (n === undefined) {
           return old
         }
-        return {
-          ...old,
-          content: old.content.map((p) =>
-            p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p,
-          ),
-        }
+        return patchPostInInfiniteLists(old, postId, { commentCount: n })
       })
       return { prevComments, prevPost, prevLists, tempId }
     },
@@ -190,7 +187,7 @@ export function PostCommentsSection({ postId }: { postId: string }) {
       await queryClient.cancelQueries({ queryKey: commentKeys.post(postId) })
       const prevComments = queryClient.getQueryData<CommentListDto>(commentKeys.post(postId))
       const prevPost = queryClient.getQueryData<PostDto>(postKeys.detail(postId))
-      const prevLists = queryClient.getQueriesData<PostPageDto>({ queryKey: postKeys.lists() })
+      const prevLists = queryClient.getQueriesData({ queryKey: postKeys.lists() })
       if (!prevComments) {
         return { prevComments, prevPost, prevLists }
       }
@@ -199,25 +196,19 @@ export function PostCommentsSection({ postId }: { postId: string }) {
         comments: prevComments.comments.filter((c) => !removeIds.has(c.id)),
       })
       const removed = removeIds.size
+      let nextCommentCount: number | undefined
       if (prevPost) {
+        nextCommentCount = Math.max(0, prevPost.commentCount - removed)
         queryClient.setQueryData<PostDto>(postKeys.detail(postId), {
           ...prevPost,
-          commentCount: Math.max(0, prevPost.commentCount - removed),
+          commentCount: nextCommentCount,
         })
       }
-      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
-        if (!old?.content?.length) {
-          return old
-        }
-        return {
-          ...old,
-          content: old.content.map((p) =>
-            p.id === postId
-              ? { ...p, commentCount: Math.max(0, p.commentCount - removed) }
-              : p,
-          ),
-        }
-      })
+      if (nextCommentCount !== undefined) {
+        queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old) =>
+          patchPostInInfiniteLists(old, postId, { commentCount: nextCommentCount }),
+        )
+      }
       return { prevComments, prevPost, prevLists }
     },
     onError: (e: Error, _id, ctx) => {

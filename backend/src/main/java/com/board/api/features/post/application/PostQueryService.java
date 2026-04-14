@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -16,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.board.api.common.exception.ApiException;
 import com.board.api.features.comment.infrastructure.persistence.CommentRepository;
 import com.board.api.features.file.api.FileApiPaths;
+import com.board.api.features.post.api.dto.PostCursorPageResponse;
 import com.board.api.features.post.api.dto.PostImageResponse;
-import com.board.api.features.post.api.dto.PostPageResponse;
 import com.board.api.features.post.api.dto.PostResponse;
 import com.board.api.features.post.domain.Post;
 import com.board.api.features.post.infrastructure.persistence.PostImageRepository;
@@ -55,14 +54,6 @@ public class PostQueryService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<Post> list(int page, int size) {
-		int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
-		int safePage = Math.max(page, 0);
-		Pageable pageable = PageRequest.of(safePage, safeSize);
-		return postRepository.findAllByOrderByCreatedAtDesc(pageable);
-	}
-
-	@Transactional(readOnly = true)
 	public List<PostImageResponse> imageResponsesForPost(long postId) {
 		return postImageRepository.findByPostIdOrderBySortOrderAsc(postId).stream()
 				.map(pi -> new PostImageResponse(
@@ -94,14 +85,43 @@ public class PostQueryService {
 		return buildResponse(post, viewerUserId, viewCount);
 	}
 
+	/**
+	 * 키셋 페이지네이션: 최신순(작성 시각 내림차순, 동률 시 id 내림차순).
+	 *
+	 * @param cursorEncoded 직전 페이지 마지막 글의 커서(없으면 첫 페이지)
+	 */
 	@Transactional(readOnly = true)
-	public PostPageResponse listPosts(int page, int size, Long viewerUserId) {
-		Page<Post> data = list(page, size);
-		List<Post> content = data.getContent();
-		if (content.isEmpty()) {
-			return PostPageResponse.from(data, p -> buildResponse(p, viewerUserId));
+	public PostCursorPageResponse listPostsByCursor(String cursorEncoded, int size, Long viewerUserId) {
+		int limit = clampPageSize(size);
+		int fetch = limit + 1;
+		Pageable pageable = PageRequest.of(0, fetch);
+
+		List<Post> chunk;
+		if (cursorEncoded == null || cursorEncoded.isBlank()) {
+			chunk = postRepository.findAllByOrderByCreatedAtDescIdDesc(pageable).getContent();
 		}
-		List<Long> ids = content.stream().map(Post::getId).toList();
+		else {
+			PostCursorCodec.Cursor c = PostCursorCodec.decode(cursorEncoded);
+			chunk = postRepository.findOlderThan(c.createdAt(), c.postId(), pageable);
+		}
+
+		boolean hasMore = chunk.size() > limit;
+		List<Post> page = hasMore ? chunk.subList(0, limit) : chunk;
+		String nextCursor = null;
+		if (hasMore && !page.isEmpty()) {
+			Post last = page.get(page.size() - 1);
+			nextCursor = PostCursorCodec.encode(last.getCreatedAt(), last.getId());
+		}
+
+		List<PostResponse> mapped = mapPostsWithBatchAggregates(page, viewerUserId);
+		return new PostCursorPageResponse(mapped, nextCursor, mapped.size(), hasMore);
+	}
+
+	private List<PostResponse> mapPostsWithBatchAggregates(List<Post> posts, Long viewerUserId) {
+		if (posts.isEmpty()) {
+			return List.of();
+		}
+		List<Long> ids = posts.stream().map(Post::getId).toList();
 		Map<Long, Long> likeMap = toCountMap(postLikeRepository.countGroupedByPostId(ids));
 		Map<Long, Long> commentMap = toCountMap(commentRepository.countGroupedByPostId(ids));
 		Map<Long, Long> viewMap = postViewService.getCounts(ids);
@@ -109,14 +129,18 @@ public class PostQueryService {
 		if (viewerUserId != null) {
 			likedSet.addAll(postLikeRepository.findPostIdsLikedByUser(viewerUserId, ids));
 		}
-		return PostPageResponse.from(data, p -> {
+		return posts.stream().map(p -> {
 			long pid = p.getId();
 			long lc = likeMap.getOrDefault(pid, 0L);
 			long cc = commentMap.getOrDefault(pid, 0L);
 			long vc = viewMap.getOrDefault(pid, 0L);
 			boolean lk = likedSet.contains(pid);
 			return PostResponse.from(p, imageResponsesForPost(pid), lc, cc, lk, vc);
-		});
+		}).toList();
+	}
+
+	private static int clampPageSize(int size) {
+		return Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
 	}
 
 	private static Map<Long, Long> toCountMap(List<Object[]> rows) {

@@ -8,14 +8,20 @@ import {
 
 import type {
   CreatePostBody,
+  PostCursorPageDto,
   PostDto,
   PostLikeStatusDto,
-  PostPageDto,
 } from '../model/post.types'
 
-export function fetchPostsPage(page: number, size: number): Promise<PostPageDto> {
-  const q = new URLSearchParams({ page: String(page), size: String(size) })
-  return getJson<PostPageDto>(`/posts?${q.toString()}`)
+export function fetchPostsCursorPage(
+  size: number,
+  cursor: string | null,
+): Promise<PostCursorPageDto> {
+  const q = new URLSearchParams({ size: String(size) })
+  if (cursor) {
+    q.set('cursor', cursor)
+  }
+  return getJson<PostCursorPageDto>(`/posts?${q.toString()}`)
 }
 
 export function fetchPopularPosts(limit: number): Promise<PostDto[]> {
