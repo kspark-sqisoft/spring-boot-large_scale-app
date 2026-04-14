@@ -11,16 +11,27 @@ public record PostResponse(
 		String content,
 		Instant createdAt,
 		Instant updatedAt,
-		List<PostImageResponse> images
+		List<PostImageResponse> images,
+		long likeCount,
+		long commentCount,
+		boolean likedByMe
 ) {
 
-	public static PostResponse from(Post post, List<PostImageResponse> images) {
+	public static PostResponse from(
+			Post post,
+			List<PostImageResponse> images,
+			long likeCount,
+			long commentCount,
+			boolean likedByMe) {
 		return new PostResponse(
 				Long.toString(post.getId()),
 				post.getTitle(),
 				post.getContent(),
 				post.getCreatedAt(),
 				post.getUpdatedAt(),
-				images == null ? List.of() : images);
+				images == null ? List.of() : images,
+				likeCount,
+				commentCount,
+				likedByMe);
 	}
 }

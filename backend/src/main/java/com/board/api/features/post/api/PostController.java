@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,10 +22,12 @@ import jakarta.validation.Valid;
 
 import com.board.api.common.security.AppUserDetails;
 import com.board.api.features.post.api.dto.CreatePostRequest;
+import com.board.api.features.post.api.dto.PostLikeStatusResponse;
 import com.board.api.features.post.api.dto.PostPageResponse;
 import com.board.api.features.post.api.dto.PostResponse;
 import com.board.api.features.post.api.dto.UpdatePostRequest;
 import com.board.api.features.post.application.PostCommandService;
+import com.board.api.features.post.application.PostLikeCommandService;
 import com.board.api.features.post.application.PostQueryService;
 import com.board.api.features.post.domain.Post;
 
@@ -33,10 +37,15 @@ public class PostController {
 
 	private final PostCommandService postCommandService;
 	private final PostQueryService postQueryService;
+	private final PostLikeCommandService postLikeCommandService;
 
-	public PostController(PostCommandService postCommandService, PostQueryService postQueryService) {
+	public PostController(
+			PostCommandService postCommandService,
+			PostQueryService postQueryService,
+			PostLikeCommandService postLikeCommandService) {
 		this.postCommandService = postCommandService;
 		this.postQueryService = postQueryService;
+		this.postLikeCommandService = postLikeCommandService;
 	}
 
 	@PostMapping
@@ -47,19 +56,20 @@ public class PostController {
 			@Valid @RequestBody CreatePostRequest request) {
 		List<Long> imageIds = parseLongIds(request.imageFileIds());
 		Post post = postCommandService.create(principal.getUserId(), request.title(), request.content(), imageIds);
-		return PostResponse.from(post, postQueryService.imageResponsesForPost(post.getId()));
+		return postQueryService.buildResponse(post, principal.getUserId());
 	}
 
 	@GetMapping("/{postId}")
-	public PostResponse get(@PathVariable long postId) {
-		return postQueryService.getDetail(postId);
+	public PostResponse get(@PathVariable long postId, Authentication authentication) {
+		return postQueryService.getDetail(postId, viewerId(authentication));
 	}
 
 	@GetMapping
 	public PostPageResponse list(
 			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "20") int size) {
-		return postQueryService.listPosts(page, size);
+			@RequestParam(defaultValue = "20") int size,
+			Authentication authentication) {
+		return postQueryService.listPosts(page, size, viewerId(authentication));
 	}
 
 	@PutMapping("/{postId}")
@@ -77,7 +87,7 @@ public class PostController {
 				request.title(),
 				request.content(),
 				imageIdsOrNull);
-		return PostResponse.from(post, postQueryService.imageResponsesForPost(post.getId()));
+		return postQueryService.buildResponse(post, principal.getUserId());
 	}
 
 	@DeleteMapping("/{postId}")
@@ -85,6 +95,35 @@ public class PostController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable long postId) {
 		postCommandService.delete(postId);
+	}
+
+	@PostMapping("/{postId}/likes")
+	@PreAuthorize("isAuthenticated()")
+	public PostLikeStatusResponse addLike(
+			@AuthenticationPrincipal AppUserDetails principal,
+			@PathVariable long postId) {
+		return postLikeCommandService.like(postId, principal.getUserId());
+	}
+
+	@DeleteMapping("/{postId}/likes")
+	@PreAuthorize("isAuthenticated()")
+	public PostLikeStatusResponse removeLike(
+			@AuthenticationPrincipal AppUserDetails principal,
+			@PathVariable long postId) {
+		return postLikeCommandService.unlike(postId, principal.getUserId());
+	}
+
+	private static Long viewerId(Authentication authentication) {
+		if (authentication == null
+				|| !authentication.isAuthenticated()
+				|| authentication instanceof AnonymousAuthenticationToken) {
+			return null;
+		}
+		Object p = authentication.getPrincipal();
+		if (p instanceof AppUserDetails details) {
+			return details.getUserId();
+		}
+		return null;
 	}
 
 	private static List<Long> parseLongIds(List<String> ids) {

@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { PostCommentsSection } from '@/features/comment'
-import { deletePost, fetchPost } from '@/features/post/api/post-api'
+import { deletePost, fetchPost, likePost, unlikePost } from '@/features/post/api/post-api'
+import type { PostDto, PostPageDto } from '@/features/post/model/post.types'
 import { useAuthStore } from '@/shared/store/auth-store'
 import { postKeys } from '@/features/post/api/post-keys'
 import { Button } from '@/shared/ui/button'
@@ -39,6 +40,72 @@ export function PostDetailPage() {
     onError: (e: Error) => toast.error(e.message),
   })
 
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      const current = queryClient.getQueryData<PostDto>(postKeys.detail(postId!))
+      if (current?.likedByMe) {
+        return unlikePost(postId!)
+      }
+      return likePost(postId!)
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: postKeys.detail(postId!) })
+      const previous = queryClient.getQueryData<PostDto>(postKeys.detail(postId!))
+      if (previous) {
+        const liked = !previous.likedByMe
+        const likeCount = Math.max(0, previous.likeCount + (liked ? 1 : -1))
+        const next = { ...previous, likedByMe: liked, likeCount }
+        queryClient.setQueryData(postKeys.detail(postId!), next)
+        queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
+          if (!old?.content?.length) {
+            return old
+          }
+          const idx = old.content.findIndex((p) => p.id === postId)
+          if (idx === -1) {
+            return old
+          }
+          const content = [...old.content]
+          content[idx] = { ...content[idx], likedByMe: liked, likeCount }
+          return { ...old, content }
+        })
+      }
+      return { previous }
+    },
+    onError: (e: Error, _v, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(postKeys.detail(postId!), context.previous)
+      }
+      void queryClient.invalidateQueries({ queryKey: postKeys.lists() })
+      toast.error(e.message)
+    },
+    onSuccess: (status) => {
+      queryClient.setQueryData(postKeys.detail(postId!), (prev: unknown) => {
+        if (!prev || typeof prev !== 'object') {
+          return prev
+        }
+        const p = prev as PostDto
+        return {
+          ...p,
+          likeCount: status.likeCount,
+          likedByMe: status.likedByMe,
+        }
+      })
+      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
+        if (!old?.content?.length) {
+          return old
+        }
+        return {
+          ...old,
+          content: old.content.map((p) =>
+            p.id === postId
+              ? { ...p, likeCount: status.likeCount, likedByMe: status.likedByMe }
+              : p,
+          ),
+        }
+      })
+    },
+  })
+
   if (!postId) {
     return <p className="text-destructive">잘못된 경로입니다.</p>
   }
@@ -51,6 +118,15 @@ export function PostDetailPage() {
         </Button>
         {data && accessToken ? (
           <>
+            <Button
+              type="button"
+              variant={data.likedByMe ? 'secondary' : 'outline'}
+              size="sm"
+              disabled={likeMutation.isPending}
+              onClick={() => likeMutation.mutate()}
+            >
+              {data.likedByMe ? '♥ 좋아요 취소' : '♡ 좋아요'} ({data.likeCount})
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to={`/posts/${postId}/edit`}>수정</Link>
             </Button>
@@ -87,6 +163,8 @@ export function PostDetailPage() {
             <CardDescription>
               작성 {new Date(data.createdAt).toLocaleString('ko-KR')} · 수정{' '}
               {new Date(data.updatedAt).toLocaleString('ko-KR')}
+              {' · '}
+              좋아요 {data.likeCount} · 댓글 {data.commentCount}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

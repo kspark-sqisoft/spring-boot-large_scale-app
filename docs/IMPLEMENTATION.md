@@ -152,9 +152,27 @@ docker compose -f docker-compose.dev.yml up --build
 
 ---
 
-## 단계 5 이후
+## 단계 5 — 좋아요 · 게시글 응답에 댓글 수 (1차 완료)
 
-좋아요 → 조회수(Redis) → 인기글(Kafka) → CQRS·캐시 순으로, 매 단계마다 **Compose에 서비스 추가**와 **이 문서에 체크**를 맞춥니다.
+로드맵 **섹션 4** 항목 36~43 중, 게시글 좋아요·집계·표시까지 1차로 반영했습니다.
+
+- [x] Flyway `V6__post_likes.sql` — `post_likes` (`post_id`, `user_id` UNIQUE, 게시글 삭제 시 CASCADE)
+- [x] `POST /api/v1/posts/{postId}/likes` — 좋아요 (멱등: 이미 있으면 동일 상태 반환). 동시 요청으로 UNIQUE 충돌 시 예외 삼키고 재조회
+- [x] `DELETE /api/v1/posts/{postId}/likes` — 좋아요 취소 (없어도 200 + 현재 카운트)
+- [x] `PostResponse`에 `likeCount`, `commentCount`, `likedByMe`(로그인 시만 true 가능) — 목록·상세에서 배치 집계(페이지 내 `postId IN (...)`)
+- [x] 프론트: 목록/상세에 좋아요·댓글 수, 로그인 시 좋아요 토글
+- [x] 댓글 변경 시 게시글 쿼리 무효화로 `commentCount` 갱신
+- [x] 테스트: `PostLikeEndpointTests`
+
+**후속(로드맵 38~40 보충)**: 역할 기반 캐시·Redis 카운터·비관적 락 등 고동시 시나리오 튜닝.
+
+**로드맵 41~43(게시글 수 & 댓글 수)**: 사용자별 작성 글/댓글 수 집계 API는 미구현(필요 시 별도 엔드포인트).
+
+---
+
+## 단계 6 이후
+
+조회수(Redis) → 인기글(Kafka) → CQRS·캐시 순으로, 매 단계마다 **Compose에 서비스 추가**와 **이 문서에 체크**를 맞춥니다.
 
 ---
 
@@ -172,3 +190,4 @@ docker compose -f docker-compose.dev.yml up --build
 |------|------|
 | 2026-04-14 | 초기 스택 구동 확인: `docker compose up --build`, MySQL 호스트 포트 **3307** (로컬 3306 충돌 회피), `/api/v1/health` 직접·Nginx 프록시 모두 OK |
 | 2026-04-14 | 로드맵 **섹션 3(댓글)** 1차: Flyway `V5`, `post_comments`, REST CRUD·2-depth 제한, 상세 페이지 댓글 UI, `CommentEndpointTests` |
+| 2026-04-14 | 로드맵 **섹션 4(좋아요)** 1차: Flyway `V6`, `post_likes`, POST/DELETE likes, `PostResponse` 집계 필드, `PostLikeEndpointTests` |

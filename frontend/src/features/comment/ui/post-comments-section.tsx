@@ -9,7 +9,9 @@ import {
   updateComment,
 } from '@/features/comment/api/comment-api'
 import { commentKeys } from '@/features/comment/api/comment-keys'
-import type { CommentDto } from '@/features/comment/model/comment.types'
+import { postKeys } from '@/features/post/api/post-keys'
+import type { CommentDto, CommentListDto } from '@/features/comment/model/comment.types'
+import type { PostDto, PostPageDto } from '@/features/post/model/post.types'
 import { useAuthStore } from '@/shared/store/auth-store'
 import { Button } from '@/shared/ui/button'
 import {
@@ -20,6 +22,19 @@ import {
   CardTitle,
 } from '@/shared/ui/card'
 import { Label } from '@/shared/ui/label'
+
+function collectRemoveIds(comments: CommentDto[], id: string): Set<string> {
+  const remove = new Set<string>([id])
+  const target = comments.find((c) => c.id === id)
+  if (target && target.depth === 0) {
+    for (const c of comments) {
+      if (c.parentCommentId === id) {
+        remove.add(c.id)
+      }
+    }
+  }
+  return remove
+}
 
 export function PostCommentsSection({ postId }: { postId: string }) {
   const queryClient = useQueryClient()
@@ -42,39 +57,187 @@ export function PostCommentsSection({ postId }: { postId: string }) {
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) })
+    void queryClient.invalidateQueries({ queryKey: postKeys.detail(postId) })
+    void queryClient.invalidateQueries({ queryKey: postKeys.lists() })
   }
 
   const createMut = useMutation({
     mutationFn: (body: { content: string; parentCommentId?: string | null }) =>
       createComment(postId, body),
-    onSuccess: () => {
-      invalidate()
+    onMutate: async (body) => {
+      await queryClient.cancelQueries({ queryKey: commentKeys.post(postId) })
+      const prevComments = queryClient.getQueryData<CommentListDto>(commentKeys.post(postId))
+      const prevPost = queryClient.getQueryData<PostDto>(postKeys.detail(postId))
+      const prevLists = queryClient.getQueriesData<PostPageDto>({ queryKey: postKeys.lists() })
+      if (!user) {
+        return { prevComments, prevPost, prevLists, tempId: '' as const }
+      }
+      const tempId = `optimistic-${Date.now()}`
+      const optimistic: CommentDto = {
+        id: tempId,
+        postId,
+        parentCommentId: body.parentCommentId ?? null,
+        depth: body.parentCommentId ? 1 : 0,
+        content: body.content,
+        author: {
+          id: user.id,
+          displayName: user.displayName?.trim() || user.email,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      queryClient.setQueryData<CommentListDto>(commentKeys.post(postId), {
+        comments: [...(prevComments?.comments ?? []), optimistic],
+      })
+      if (prevPost) {
+        queryClient.setQueryData<PostDto>(postKeys.detail(postId), {
+          ...prevPost,
+          commentCount: prevPost.commentCount + 1,
+        })
+      }
+      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
+        if (!old?.content?.length) {
+          return old
+        }
+        return {
+          ...old,
+          content: old.content.map((p) =>
+            p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p,
+          ),
+        }
+      })
+      return { prevComments, prevPost, prevLists, tempId }
+    },
+    onError: (e: Error, _body, ctx) => {
+      if (ctx?.prevComments !== undefined) {
+        queryClient.setQueryData(commentKeys.post(postId), ctx.prevComments)
+      }
+      if (ctx?.prevPost !== undefined) {
+        queryClient.setQueryData(postKeys.detail(postId), ctx.prevPost)
+      }
+      if (ctx?.prevLists) {
+        for (const [key, data] of ctx.prevLists) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+      void queryClient.invalidateQueries({ queryKey: postKeys.lists() })
+      toast.error(e.message)
+    },
+    onSuccess: (server, _body, ctx) => {
+      if (!ctx?.tempId) {
+        invalidate()
+        setRootDraft('')
+        setReplyDraft('')
+        setReplyParentId(null)
+        toast.success('댓글을 등록했습니다.')
+        return
+      }
+      queryClient.setQueryData<CommentListDto>(commentKeys.post(postId), (old) => {
+        const list = old?.comments ?? []
+        const next = list.map((c) => (c.id === ctx.tempId ? server : c))
+        next.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        )
+        return { comments: next }
+      })
       setRootDraft('')
       setReplyDraft('')
       setReplyParentId(null)
       toast.success('댓글을 등록했습니다.')
     },
-    onError: (e: Error) => toast.error(e.message),
   })
 
   const updateMut = useMutation({
     mutationFn: ({ id, content }: { id: string; content: string }) =>
       updateComment(postId, id, content),
-    onSuccess: () => {
-      invalidate()
+    onMutate: async ({ id, content }) => {
+      await queryClient.cancelQueries({ queryKey: commentKeys.post(postId) })
+      const prevComments = queryClient.getQueryData<CommentListDto>(commentKeys.post(postId))
+      if (prevComments) {
+        const now = new Date().toISOString()
+        queryClient.setQueryData<CommentListDto>(commentKeys.post(postId), {
+          comments: prevComments.comments.map((c) =>
+            c.id === id ? { ...c, content, updatedAt: now } : c,
+          ),
+        })
+      }
+      return { prevComments }
+    },
+    onError: (e: Error, _v, ctx) => {
+      if (ctx?.prevComments !== undefined) {
+        queryClient.setQueryData(commentKeys.post(postId), ctx.prevComments)
+      }
+      toast.error(e.message)
+    },
+    onSuccess: (server, { id }) => {
+      queryClient.setQueryData<CommentListDto>(commentKeys.post(postId), (old) => {
+        if (!old) {
+          return old
+        }
+        return {
+          comments: old.comments.map((c) => (c.id === id ? server : c)),
+        }
+      })
       setEditingId(null)
       toast.success('수정했습니다.')
     },
-    onError: (e: Error) => toast.error(e.message),
   })
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteComment(postId, id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: commentKeys.post(postId) })
+      const prevComments = queryClient.getQueryData<CommentListDto>(commentKeys.post(postId))
+      const prevPost = queryClient.getQueryData<PostDto>(postKeys.detail(postId))
+      const prevLists = queryClient.getQueriesData<PostPageDto>({ queryKey: postKeys.lists() })
+      if (!prevComments) {
+        return { prevComments, prevPost, prevLists }
+      }
+      const removeIds = collectRemoveIds(prevComments.comments, id)
+      queryClient.setQueryData<CommentListDto>(commentKeys.post(postId), {
+        comments: prevComments.comments.filter((c) => !removeIds.has(c.id)),
+      })
+      const removed = removeIds.size
+      if (prevPost) {
+        queryClient.setQueryData<PostDto>(postKeys.detail(postId), {
+          ...prevPost,
+          commentCount: Math.max(0, prevPost.commentCount - removed),
+        })
+      }
+      queryClient.setQueriesData({ queryKey: postKeys.lists() }, (old: PostPageDto | undefined) => {
+        if (!old?.content?.length) {
+          return old
+        }
+        return {
+          ...old,
+          content: old.content.map((p) =>
+            p.id === postId
+              ? { ...p, commentCount: Math.max(0, p.commentCount - removed) }
+              : p,
+          ),
+        }
+      })
+      return { prevComments, prevPost, prevLists }
+    },
+    onError: (e: Error, _id, ctx) => {
+      if (ctx?.prevComments !== undefined) {
+        queryClient.setQueryData(commentKeys.post(postId), ctx.prevComments)
+      }
+      if (ctx?.prevPost !== undefined) {
+        queryClient.setQueryData(postKeys.detail(postId), ctx.prevPost)
+      }
+      if (ctx?.prevLists) {
+        for (const [key, data] of ctx.prevLists) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+      void queryClient.invalidateQueries({ queryKey: postKeys.lists() })
+      toast.error(e.message)
+    },
     onSuccess: () => {
-      invalidate()
       toast.success('삭제했습니다.')
     },
-    onError: (e: Error) => toast.error(e.message),
   })
 
   const isMine = (c: CommentDto) => user?.id === c.author.id

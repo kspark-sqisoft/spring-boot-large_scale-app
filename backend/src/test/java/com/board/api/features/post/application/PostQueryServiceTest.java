@@ -18,8 +18,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import com.board.api.common.exception.ApiException;
+import com.board.api.features.comment.infrastructure.persistence.CommentRepository;
 import com.board.api.features.post.domain.Post;
 import com.board.api.features.post.infrastructure.persistence.PostImageRepository;
+import com.board.api.features.post.infrastructure.persistence.PostLikeRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +31,10 @@ class PostQueryServiceTest {
 	private PostRepository postRepository;
 	@Mock
 	private PostImageRepository postImageRepository;
+	@Mock
+	private CommentRepository commentRepository;
+	@Mock
+	private PostLikeRepository postLikeRepository;
 
 	@InjectMocks
 	private PostQueryService postQueryService;

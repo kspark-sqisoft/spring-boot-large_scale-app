@@ -10,6 +10,14 @@ export type PostDto = {
   createdAt: string
   updatedAt: string
   images: PostImageDto[]
+  likeCount: number
+  commentCount: number
+  likedByMe: boolean
+}
+
+export type PostLikeStatusDto = {
+  likeCount: number
+  likedByMe: boolean
 }
 
 export type PostPageDto = {

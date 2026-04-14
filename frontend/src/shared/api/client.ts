@@ -174,6 +174,22 @@ export async function deleteResource(
   await ensureOk(res)
 }
 
+export async function deleteJson<TResponse>(
+  path: string,
+  init?: RequestInit,
+): Promise<TResponse> {
+  const res = await apiRequest(path, {
+    ...init,
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      ...init?.headers,
+    },
+  })
+  await ensureOk(res)
+  return res.json() as Promise<TResponse>
+}
+
 export async function patchJson<TResponse>(
   path: string,
   payload: unknown,
