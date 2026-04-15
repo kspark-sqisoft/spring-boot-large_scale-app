@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/** 컨트롤러 전역 예외 → 일관된 JSON {@link ErrorResponse} */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

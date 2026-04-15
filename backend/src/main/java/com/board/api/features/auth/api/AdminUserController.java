@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.board.api.features.auth.api.dto.UserPageResponse;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
 
+/** 관리자 전용 사용자 목록 페이징 */
 @RestController
 @RequestMapping("/api/v1/admin")
 @PreAuthorize("hasRole('ADMIN')")

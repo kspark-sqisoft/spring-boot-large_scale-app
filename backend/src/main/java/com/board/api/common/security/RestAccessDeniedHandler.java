@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/** 로그인은 됐으나 역할·권한 부족일 때 403 JSON */
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
 

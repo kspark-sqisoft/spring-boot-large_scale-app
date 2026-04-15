@@ -19,6 +19,8 @@ import {
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 
+// `/users/me` GET/PATCH + 아바타 업로드 후 zustand user 동기화
+
 const meQueryKey = ['users', 'me'] as const
 
 export function ProfilePage() {

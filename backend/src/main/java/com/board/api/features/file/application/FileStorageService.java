@@ -23,6 +23,7 @@ import com.board.api.features.file.infrastructure.persistence.StoredFileReposito
 
 import jakarta.annotation.PostConstruct;
 
+/** 디스크에 파일 저장·메타 DB 기록·이미지 타입·용량 검증 */
 @Service
 public class FileStorageService {
 

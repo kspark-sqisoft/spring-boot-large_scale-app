@@ -18,6 +18,7 @@ import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.domain.UserRole;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
 
+/** 회원·비밀번호·세션 발급: 액세스 JWT + DB에 해시 저장된 리프레시 토큰 */
 @Service
 public class AuthService {
 
@@ -81,6 +82,7 @@ public class AuthService {
 		return issueSession(user);
 	}
 
+	/** 기존 리프레시 폐기 후 새 액세스+리프레시 쌍 발급(로테이션) */
 	@Transactional
 	public SessionIssue refresh(String rawRefreshToken) {
 		var stored = refreshTokenService.findValid(rawRefreshToken)

@@ -13,6 +13,8 @@ import type {
   PostLikeStatusDto,
 } from '../model/post.types'
 
+// 게시글 REST 래퍼 — 실제 HTTP는 shared/api/client(getJson·postJson…)가 처리
+
 export function fetchPostsCursorPage(
   size: number,
   cursor: string | null,

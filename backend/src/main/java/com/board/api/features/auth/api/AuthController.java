@@ -19,6 +19,7 @@ import com.board.api.features.auth.application.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+/** 회원가입·로그인·토큰 갱신·로그아웃. 리프레시는 HttpOnly 쿠키, 액세스는 응답 본문(Bearer). */
 @RestController
 @RequestMapping(AuthApiPaths.BASE)
 public class AuthController {
@@ -43,6 +44,7 @@ public class AuthController {
 		return sessionResponse(issue, HttpStatus.OK);
 	}
 
+	/** 쿠키의 리프레시로 새 액세스 발급, Set-Cookie로 리프레시 로테이션 */
 	@PostMapping("/refresh")
 	public ResponseEntity<AccessTokenResponse> refresh(HttpServletRequest httpRequest) {
 		String raw = AuthCookie.readRefreshRaw(httpRequest)

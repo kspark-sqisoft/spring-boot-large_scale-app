@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '@/shared/store/auth-store'
 
+/** ADMIN 아니면 /posts 로 되돌림(RequireAuth 안에서만 쓰는 것을 권장) */
 export function AdminOnly({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)

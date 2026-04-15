@@ -11,6 +11,8 @@ import {
   CardTitle,
 } from '@/shared/ui/card'
 
+// 관리자 API `/admin/users` 페이징 — RequireAuth + AdminOnly 안에서만 라우팅됨
+
 type UserSummary = {
   id: string
   email: string

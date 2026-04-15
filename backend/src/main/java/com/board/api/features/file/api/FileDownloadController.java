@@ -19,6 +19,7 @@ import com.board.api.features.file.application.FileStorageService;
 import com.board.api.features.file.domain.StoredFile;
 import com.board.api.features.file.infrastructure.persistence.StoredFileRepository;
 
+/** 업로드된 파일 ID로 디스크 리소스 스트리밍(GET은 SecurityConfig에서 permitAll) */
 @RestController
 @RequestMapping(FileApiPaths.FILES)
 public class FileDownloadController {

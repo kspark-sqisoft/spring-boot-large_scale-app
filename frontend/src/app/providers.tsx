@@ -7,6 +7,7 @@ import { createAppQueryClient } from '@/app/query-client'
 import { AuthBootstrap } from '@/features/auth'
 import { Toaster } from '@/shared/ui/sonner'
 
+// 서버 상태·다크모드·토스트·기동 시 refresh 쿠키로 세션 복구(AuthBootstrap)
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(createAppQueryClient)
 

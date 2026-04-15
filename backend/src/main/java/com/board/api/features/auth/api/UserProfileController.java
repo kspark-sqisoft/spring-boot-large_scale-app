@@ -16,6 +16,7 @@ import com.board.api.features.auth.application.UserProfileService;
 
 import jakarta.validation.Valid;
 
+/** 현재 로그인 사용자 프로필 조회·수정({@code /me}) */
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserProfileController {

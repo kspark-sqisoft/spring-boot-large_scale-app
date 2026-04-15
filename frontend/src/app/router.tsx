@@ -18,6 +18,7 @@ import {
 } from '@/features/post'
 import { AppLayout } from '@/widgets/app-layout'
 
+// URL → 페이지 매핑. 작성/프로필/관리는 RequireAuth(+ AdminOnly)로 보호
 export const appRouter = createBrowserRouter([
   {
     path: '/',

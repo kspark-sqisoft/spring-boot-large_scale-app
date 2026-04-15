@@ -36,6 +36,7 @@ import com.board.api.features.post.application.PostViewEventPublisher;
 import com.board.api.features.post.application.PostViewService;
 import com.board.api.features.post.domain.Post;
 
+/** 게시글 CRUD·목록(커서)·인기·조회수·좋아요. 조회는 대부분 공개, 쓰기는 인증 필요. */
 @RestController
 @RequestMapping(PostApiPaths.BASE)
 public class PostController {
@@ -82,6 +83,7 @@ public class PostController {
 
 	@GetMapping("/{postId}")
 	public ResponseEntity<PostResponse> get(@PathVariable long postId, Authentication authentication) {
+		// Redis(옵션) 조회수 증가 + Kafka(옵션) 조회 이벤트
 		long viewCount = postViewService.incrementAndGet(postId);
 		postViewEventPublisher.publishPostViewed(postId);
 		PostResponse body = postQueryService.getDetailWithViewCount(postId, viewerId(authentication), viewCount);

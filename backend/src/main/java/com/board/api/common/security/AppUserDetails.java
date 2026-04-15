@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.domain.UserRole;
 
+/** Spring Security 주체: userId·역할(ROLE_USER/ROLE_ADMIN)을 컨트롤러·{@code @PreAuthorize}에 노출 */
 public class AppUserDetails implements UserDetails {
 
 	private final Long userId;

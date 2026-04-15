@@ -17,6 +17,7 @@ import com.board.api.common.config.JwtProperties;
 import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.domain.UserRole;
 
+/** 액세스 JWT 생성·파싱(짧은 만료). 리프레시는 이 클래스 밖에서 원시값+DB로 관리 */
 @Component
 public class JwtTokenProvider {
 

@@ -13,6 +13,7 @@ import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.domain.UserRole;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
 
+/** 개발 편의: 설정된 최초 관리자 계정이 없으면 기동 시 한 번 생성 */
 @Component
 @Order(100)
 @ConditionalOnProperty(name = "app.security.bootstrap-admin", havingValue = "true")

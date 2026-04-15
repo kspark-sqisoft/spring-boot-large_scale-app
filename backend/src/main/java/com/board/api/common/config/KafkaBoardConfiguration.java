@@ -24,6 +24,7 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.listener.ContainerProperties;
 
+/** {@code app.kafka.enabled=true} 일 때만: 토픽·프로듀서·컨슈머 팩토리 등록 */
 @Configuration
 @EnableKafka
 @EnableConfigurationProperties(KafkaBoardProperties.class)

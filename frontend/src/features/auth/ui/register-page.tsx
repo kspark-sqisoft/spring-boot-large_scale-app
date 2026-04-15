@@ -16,6 +16,7 @@ import {
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 
+// 가입 성공 시 세션 저장은 auth-api.registerRequest → 보통 목록으로 이동
 export function RegisterPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')

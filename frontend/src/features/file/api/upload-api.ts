@@ -1,5 +1,7 @@
 import { postMultipartJson } from '@/shared/api/client'
 
+// multipart는 client의 postMultipartJson(401 시 refresh 경로 분리)
+
 export type UploadResponse = {
   id: string
   url: string

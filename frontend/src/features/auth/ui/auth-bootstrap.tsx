@@ -5,9 +5,7 @@ import { useAuthStore } from '@/shared/store/auth-store'
 
 import type { UserMeResponse } from '../model/auth.types'
 
-/**
- * 앱 기동 시 HttpOnly 리프레시 쿠키가 있으면 액세스 토큰을 복구하고 /users/me 로 사용자를 채웁니다.
- */
+/** 마운트 시: refresh 쿠키 → 액세스 토큰 저장 → 가능하면 `/users/me`로 user 채움 → bootstrapped=true */
 export function AuthBootstrap({ children }: { children: ReactNode }) {
   const setAccessToken = useAuthStore((s) => s.setAccessToken)
   const setUser = useAuthStore((s) => s.setUser)

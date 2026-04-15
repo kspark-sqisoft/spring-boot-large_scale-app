@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from '@/shared/ui/card'
 
+// 단건 조회 + 댓글 위젯 + 좋아요/삭제(권한 있을 때)
 export function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>()
   const navigate = useNavigate()

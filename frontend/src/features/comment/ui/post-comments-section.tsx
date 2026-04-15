@@ -24,6 +24,8 @@ import {
 } from '@/shared/ui/card'
 import { Label } from '@/shared/ui/label'
 
+// 게시글 상세 안에서 댓글 목록·작성/수정/삭제 + 목록 캐시·무한스크롤 목록의 commentCount 동기화
+
 function collectRemoveIds(comments: CommentDto[], id: string): Set<string> {
   const remove = new Set<string>([id])
   const target = comments.find((c) => c.id === id)

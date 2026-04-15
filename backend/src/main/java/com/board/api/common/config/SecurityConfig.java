@@ -23,6 +23,9 @@ import com.board.api.common.security.JwtAuthenticationFilter;
 import com.board.api.common.security.RestAccessDeniedHandler;
 import com.board.api.common.security.RestAuthenticationEntryPoint;
 
+/**
+ * HTTP 보안: JWT(stateless) + CORS + URL·메서드별 허용 규칙. {@code @PreAuthorize}는 메서드 단 추가 검사.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -47,12 +50,14 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
+				// REST API + JWT라 세션·CSRF 미사용
 				.csrf(csrf -> csrf.disable())
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint(authenticationEntryPoint)
 						.accessDeniedHandler(accessDeniedHandler))
+				// 공개: 헬스·파일 GET·게시글 조회·인증 엔드포인트 / 그 외는 인증 필요·관리자 전용은 ROLE_ADMIN
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/api/v1/health").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
@@ -61,6 +66,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/**").permitAll()
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated())
+				// Authorization 헤더의 Bearer JWT를 파싱해 SecurityContext 채움
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}

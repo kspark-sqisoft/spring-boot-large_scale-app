@@ -21,6 +21,8 @@ import { Label } from '@/shared/ui/label'
 import { getJson } from '@/shared/api/client'
 import { useUiStore } from '@/shared/stores/ui-store'
 
+// 백엔드 헬스 API + (옵션) UI 스토어와 연동한 새로고침 폼
+
 type RefreshFormState =
   | null
   | { ok: true; message: string; at: number }

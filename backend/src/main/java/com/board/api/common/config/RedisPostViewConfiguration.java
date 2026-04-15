@@ -9,6 +9,7 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+/** {@code app.redis.enabled=true} 일 때만: 조회수 등에 쓰는 Redis 연결·{@link StringRedisTemplate} */
 @Configuration
 @EnableConfigurationProperties(RedisViewProperties.class)
 @ConditionalOnProperty(name = "app.redis.enabled", havingValue = "true")

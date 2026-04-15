@@ -12,6 +12,9 @@ import com.board.api.common.config.FileStorageProperties;
 import com.board.api.common.config.JwtProperties;
 import com.board.api.common.config.SecurityBootstrapProperties;
 
+/**
+ * 게시판 API 진입점. Redis/Kafka 자동설정은 프로필·플래그로 켤 때만 수동 빈으로 구성하므로 여기서 제외합니다.
+ */
 @SpringBootApplication(exclude = {
 		RedisAutoConfiguration.class,
 		RedisRepositoriesAutoConfiguration.class,

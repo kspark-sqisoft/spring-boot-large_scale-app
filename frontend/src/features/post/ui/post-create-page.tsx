@@ -18,6 +18,7 @@ import {
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 
+// 이미지 먼저 upload → 반환 id로 본문과 함께 createPost
 export function PostCreatePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()

@@ -19,6 +19,8 @@ import {
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 
+// 기존 글 fetch 후 폼에서 updatePost(이미지 id 목록 교체 가능)
+
 function PostEditForm({ postId, initial }: { postId: string; initial: PostDto }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()

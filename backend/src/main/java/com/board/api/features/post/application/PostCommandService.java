@@ -16,6 +16,7 @@ import com.board.api.features.post.infrastructure.persistence.PostImageRepositor
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
 import com.board.api.features.file.infrastructure.persistence.StoredFileRepository;
 
+/** 게시글·첨부 이미지 연결의 트랜잭션 단위 변경(생성·수정·삭제) */
 @Service
 public class PostCommandService {
 

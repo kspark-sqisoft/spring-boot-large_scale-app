@@ -20,6 +20,7 @@ import com.board.api.features.comment.domain.Comment;
 import com.board.api.features.comment.infrastructure.persistence.CommentRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
 
+/** 게시글별 댓글 트리·작성자 요약 조회 */
 @Service
 public class CommentQueryService {
 

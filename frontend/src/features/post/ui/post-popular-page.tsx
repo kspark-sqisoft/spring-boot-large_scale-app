@@ -7,6 +7,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 
 const LIMIT = 20
 
+// 백엔드 인기 순위( Redis 집계 등 ) — 환경에 따라 빈 목록일 수 있음
 export function PostPopularPage() {
   const { data, isPending, isError, error } = useQuery({
     queryKey: postKeys.popular(LIMIT),

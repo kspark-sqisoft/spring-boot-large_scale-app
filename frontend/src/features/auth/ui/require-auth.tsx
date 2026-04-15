@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '@/shared/store/auth-store'
 
+/** bootstrapped 후 토큰 없으면 /login 으로, 이전 경로는 state.from 에 저장 */
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const location = useLocation()

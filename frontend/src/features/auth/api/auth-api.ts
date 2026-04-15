@@ -4,6 +4,8 @@ import { useAuthStore } from '@/shared/store/auth-store'
 
 import type { AuthSessionResponse, UserMeResponse } from '../model/auth.types'
 
+// 로그인/가입은 공용 client를 쓰지 않고 직접 fetch(무한 refresh 방지·쿠키 Set-Cookie 수신)
+
 async function parseHttpError(res: Response): Promise<HttpError> {
   try {
     const j = (await res.json()) as { message?: string; code?: string }

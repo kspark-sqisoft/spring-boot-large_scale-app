@@ -23,6 +23,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * 요청마다 {@code Authorization: Bearer} 액세스 JWT를 검증하고, 성공 시 {@link SecurityContextHolder}에 사용자를 넣습니다.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -39,6 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			@NonNull HttpServletRequest request,
 			@NonNull HttpServletResponse response,
 			@NonNull FilterChain filterChain) throws ServletException, IOException {
+		// Bearer 없으면 익명 요청으로 통과(공개 API는 SecurityConfig에서 permitAll)
 		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if (header == null || !header.startsWith("Bearer ")) {
 			filterChain.doFilter(request, response);
@@ -63,6 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 		}
 		catch (JwtException | IllegalArgumentException ex) {
+			// 토큰 깨짐·만료 등 → 401 JSON으로 즉시 응답(체인 진행 안 함)
 			SecurityContextHolder.clearContext();
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			response.setCharacterEncoding(StandardCharsets.UTF_8.name());

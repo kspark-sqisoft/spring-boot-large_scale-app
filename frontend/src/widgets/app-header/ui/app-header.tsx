@@ -7,6 +7,7 @@ import { useAuthStore } from '@/shared/store/auth-store'
 import { Button } from '@/shared/ui/button'
 import { ThemeToggle } from '@/shared/ui/theme-toggle'
 
+// 네비·로그인 상태별 링크·로그아웃(서버 쿠키 무효 + zustand 클리어)
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     'rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground',

@@ -17,6 +17,7 @@ import com.board.api.features.comment.domain.Comment;
 import com.board.api.features.comment.infrastructure.persistence.CommentRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
 
+/** 댓글 생성·수정·삭제(게시글 존재·작성자 검증 포함) */
 @Service
 public class CommentCommandService {
 

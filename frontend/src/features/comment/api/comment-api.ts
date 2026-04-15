@@ -11,6 +11,8 @@ import type {
   CreateCommentBody,
 } from '../model/comment.types'
 
+/** 게시글 하위 `/posts/:id/comments` 엔드포인트 모음 */
+
 export function fetchComments(postId: string): Promise<CommentListDto> {
   return getJson<CommentListDto>(
     `/posts/${encodeURIComponent(postId)}/comments`,

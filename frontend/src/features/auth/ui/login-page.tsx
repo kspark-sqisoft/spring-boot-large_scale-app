@@ -16,6 +16,7 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { HttpError } from '@/shared/api/client'
 
+// 성공 시 location.state.from 으로 복귀(없으면 게시글 목록)
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()

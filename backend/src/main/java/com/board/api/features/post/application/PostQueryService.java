@@ -23,6 +23,7 @@ import com.board.api.features.post.infrastructure.persistence.PostImageRepositor
 import com.board.api.features.post.infrastructure.persistence.PostLikeRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
 
+/** 게시글 조회·목록(커서)·응답 DTO 조립(작성자·이미지·좋아요·댓글 수 등) */
 @Service
 public class PostQueryService {
 

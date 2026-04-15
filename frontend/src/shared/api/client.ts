@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/shared/store/auth-store'
 
+/** 백엔드 `/api/v1` 호출 공통: Bearer 부착, 401 시 refresh 1회 후 재시도, 실패 시 세션 클리어 */
 const API_V1 = '/api/v1'
 
 export function buildApiUrl(path: string): string {
@@ -24,6 +25,7 @@ export class HttpError extends Error {
 
 let refreshPromise: Promise<boolean> | null = null
 
+// 동시 401 여러 개 와도 refresh 요청은 한 번만(인플라이트 공유)
 function refreshAccessToken(): Promise<boolean> {
   if (refreshPromise) {
     return refreshPromise
@@ -63,6 +65,7 @@ async function apiRequest(
   init: RequestInit = {},
   retried = false,
 ): Promise<Response> {
+  // credentials: 쿠키(리프레시) 포함 — 동일 오리진 프록시 가정
   const headers = new Headers(init.headers)
   const token = useAuthStore.getState().accessToken
   if (token && !isNoBearerPath(path)) {
