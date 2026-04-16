@@ -1,0 +1,28 @@
+---
+description: 모노레포 구조, 스택, 실행·API 기준 (항상 적용)
+alwaysApply: true
+---
+
+# 프로젝트 개요
+
+## 저장소
+
+- **백엔드** `backend/`: Spring Boot 3.5, Java 21, Gradle. 패키지 루트 `com.board.api`.
+- **프론트** `frontend/`: React 19, Vite, TypeScript, Tailwind, shadcn/ui, Zustand, TanStack Query.
+- **E2E** `e2e/`: Playwright. 헬스 체크 후 스펙 실행 패턴이 있음.
+- **문서** `docs/IMPLEMENTATION.md`: 세팅·구현 진행 기록.
+
+## 실행
+
+- 프로덕션형: 루트에서 `docker compose up --build` (MySQL + API + Nginx).
+- 개발(핫리로드): `docker compose -f docker-compose.dev.yml up --build` — Vite가 `/api`를 백엔드로 프록시.
+
+## API·인프라 기준
+
+- 공개 REST 경로는 **`/api/v1`** 접두사. 헬스: `GET /api/v1/health`.
+- DB: MySQL + Flyway 마이그레이션, JPA `ddl-auto: validate`, **open-in-view false**.
+- 선택 기능: Redis(조회수 등), Kafka(이벤트) — `application.yml`의 `app.*.enabled` 플래그로 제어.
+
+## 테스트
+
+새 기능·리팩터 시 테스트 정책과 실행 명령은 **`testing-requirements.mdc`** 를 따른다.

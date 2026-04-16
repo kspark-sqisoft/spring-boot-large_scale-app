@@ -1,0 +1,32 @@
+---
+description: React 프론트 FSD형 슬라이스·API·라우팅 관례
+globs: frontend/**/*
+alwaysApply: false
+---
+
+# 프론트엔드 (React + Vite) 관례
+
+## 디렉터리 슬라이스
+
+- **`src/app/`**: `App`, `router`, `providers`, QueryClient 등 앱 셸만 둔다.
+- **`src/features/<도메인>/`**: `api/`(fetch 래퍼·keys), `model/`(타입), `ui/`(페이지·섹션), `lib/`(도메인 헬퍼) 등으로 나눈다. 배럴 `index.ts`로 외부 공개 API를 정리한다.
+- **`src/widgets/`**: 헤더·레이아웃처럼 여러 feature에 걸친 조합 UI.
+- **`src/shared/`**: `api/client`, `store`, `ui`(shadcn 래퍼), `lib/utils` 등 공용 코드.
+
+## import
+
+- 경로 별칭 **`@/`** 는 `src/` 를 가리킨다. 상대 경로 깊은 체인보다 `@/features/...` 를 선호한다.
+
+## 백엔드 연동
+
+- API 베이스는 **`shared/api/client`** 의 `buildApiUrl` / `apiRequest` 를 통해 **`/api/v1`** 로 통일한다.
+- 인증: 액세스 토큰은 Zustand `auth-store`, 리프레시는 **쿠키 + `credentials: 'include'`**; 401 시 클라이언트가 refresh 1회 재시도하는 흐름을 깨지 않게 한다.
+
+## 라우팅·가드
+
+- 라우트 정의는 **`app/router.tsx`** 한 곳에 모은다.
+- 로그인 필요 화면은 **`RequireAuth`**, 관리자 전용은 **`AdminOnly`** 로 감싼다.
+
+## 테스트
+
+- 순수 로직·스토어·API 래퍼는 **Vitest**. 상세는 테스트 정책 규칙을 따른다.
