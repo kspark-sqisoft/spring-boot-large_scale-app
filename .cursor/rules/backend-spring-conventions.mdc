@@ -1,0 +1,30 @@
+---
+description: Spring Boot 백엔드 패키징·레이어·API·보안 관례
+globs: backend/**/*.java
+alwaysApply: false
+---
+
+# 백엔드 (Spring Boot) 관례
+
+## 패키지 구조
+
+- `com.board.api.common.*`: 설정(`config`), 예외(`exception`), 보안 공통 등 횡단 관심사.
+- `com.board.api.features.<기능>`: 기능 단위로 **`api`**(컨트롤러·DTO) · **`application`**(유스케이스·서비스) · **`domain`** · **`infrastructure`**(JPA·Redis·Kafka 등) 를 나눈다.
+- URL 상수는 `*ApiPaths` 클래스로 모을 수 있음 (예: `PostApiPaths.BASE`).
+
+## API
+
+- 모든 외부 HTTP는 **`/api/v1/...`** 아래에 둔다.
+- 검증 실패·도메인 오류는 `GlobalExceptionHandler` → JSON `ErrorResponse`(코드 + 메시지) 형태를 유지한다.
+- 새 엔드포인트 추가 시 **`SecurityConfig`** 의 `requestMatchers` 와 역할(예: `ADMIN`)을 함께 갱신한다.
+
+## 영속성·마이그레이션
+
+- 스키마 변경은 **Flyway** 스크립트로만 반영하고, 엔티티와 불일치가 없게 한다.
+- ID 등 도메인 규칙은 기존 패턴(Snowflake 등)을 재사용한다.
+
+## 테스트 (요약)
+
+- 도메인/애플리케이션: Mockito 단위 테스트.
+- HTTP·시큐리티·통합: `@SpringBootTest` + MockMvc.
+- 상세·실행 방법은 항상 적용되는 **테스트 정책** 규칙을 따른다.
