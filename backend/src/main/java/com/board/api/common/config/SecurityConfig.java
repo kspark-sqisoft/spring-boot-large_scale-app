@@ -59,6 +59,7 @@ public class SecurityConfig {
 						.accessDeniedHandler(accessDeniedHandler))
 				// 공개: 헬스·파일 GET·게시글 조회·인증 엔드포인트 / 그 외는 인증 필요·관리자 전용은 ROLE_ADMIN
 				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 						.requestMatchers("/api/v1/health").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
