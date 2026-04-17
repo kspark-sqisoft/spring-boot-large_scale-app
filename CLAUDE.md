@@ -156,6 +156,43 @@ frontend/src/
 
 ---
 
+## 커밋 메시지 규칙
+
+형식: `type: 설명 (한글)`
+
+| type | 용도 |
+|------|------|
+| `feat` | 새 기능 |
+| `fix` | 버그 수정 |
+| `docs` | 문서 변경 |
+| `style` | 코드 포맷 |
+| `refactor` | 리팩토링 |
+| `test` | 테스트 |
+| `chore` | 빌드/설정 |
+| `perf` | 성능 개선 |
+
+**올바른 예시:**
+```
+feat: 게시글 좋아요 기능 추가
+fix: 토큰 만료 시 자동 갱신 오류 수정
+docs: API 명세 업데이트
+refactor: PostService 조회 로직 분리
+test: 댓글 작성 단위 테스트 추가
+chore: commitlint + husky 커밋 메시지 규칙 설정
+perf: 게시글 목록 쿼리 N+1 개선
+```
+
+**잘못된 예시:**
+```
+기능 추가          ← type 없음
+feat 로그인 수정   ← 콜론(:) 누락
+FEAT: 수정        ← 대문자 type
+```
+
+> commitlint + husky로 형식이 맞지 않으면 커밋이 차단됩니다.
+
+---
+
 ## 포트
 
 | 서비스 | 포트 |
