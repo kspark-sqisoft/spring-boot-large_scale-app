@@ -20,13 +20,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UploadController {
 
+	// 디스크(또는 스토리지)에 바이너리 저장 + DB에 StoredFile 메타데이터 기록
 	private final FileStorageService fileStorageService;
 
+	// POST multipart/form-data — 브라우저 <input type="file"> / FormData와 동일한 형식
 	@PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("isAuthenticated()")
 	public UploadResponse uploadImage(
 			@AuthenticationPrincipal AppUserDetails principal,
+			// @RequestPart("file"): 멀티파트에서 name="file" 인 파트를 MultipartFile로 받음
 			@RequestPart("file") MultipartFile file) {
+		// ownerUserId와 함께 저장해 이후 게시글 첨부 시 "본인 파일만" 연결 가능
 		var stored = fileStorageService.storeImage(principal.getUserId(), file);
 		return new UploadResponse(
 				Long.toString(stored.getId()),

@@ -25,19 +25,24 @@ import com.board.api.features.comment.application.CommentQueryService;
 import lombok.RequiredArgsConstructor;
 
 /** 특정 게시글 하위 댓글: 목록은 공개, 쓰기·수정·삭제는 로그인 필요 */
+// URL에 postId가 포함된 "중첩 리소스" 스타일 REST 설계
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
 @RequiredArgsConstructor
 public class CommentController {
 
+	// 댓글 생성·수정·삭제
 	private final CommentCommandService commentCommandService;
+	// 댓글 목록 조회
 	private final CommentQueryService commentQueryService;
 
+	// GET /api/v1/posts/{postId}/comments — 해당 글의 댓글 목록 (인증 불필요, SecurityConfig에서 permit)
 	@GetMapping
 	public CommentListResponse list(@PathVariable long postId) {
 		return commentQueryService.listForPost(postId);
 	}
 
+	// POST /api/v1/posts/{postId}/comments — 댓글 작성
 	@PostMapping
 	@PreAuthorize("isAuthenticated()")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -48,6 +53,7 @@ public class CommentController {
 		return commentCommandService.create(postId, principal.getUserId(), request);
 	}
 
+	// PUT /api/v1/posts/{postId}/comments/{commentId} — 본인 댓글만 수정 가능(서비스에서 검증)
 	@PutMapping("/{commentId}")
 	@PreAuthorize("isAuthenticated()")
 	public CommentResponse update(
@@ -58,6 +64,7 @@ public class CommentController {
 		return commentCommandService.update(postId, commentId, principal.getUserId(), request);
 	}
 
+	// DELETE /api/v1/posts/{postId}/comments/{commentId}
 	@DeleteMapping("/{commentId}")
 	@PreAuthorize("isAuthenticated()")
 	@ResponseStatus(HttpStatus.NO_CONTENT)

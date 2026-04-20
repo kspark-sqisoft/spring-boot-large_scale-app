@@ -23,14 +23,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserProfileController {
 
+	// 닉네임·아바타 등 사용자 프로필 도메인 로직
 	private final UserProfileService userProfileService;
 
+	// GET /api/v1/users/me — JWT의 userId로 DB에서 최신 프로필 조회
 	@GetMapping("/me")
 	@PreAuthorize("isAuthenticated()")
 	public UserMeResponse me(@AuthenticationPrincipal AppUserDetails principal) {
 		return userProfileService.getMe(principal.getUserId());
 	}
 
+	// PATCH /api/v1/users/me — 일부 필드만 수정 (PUT과 달리 전체 교체가 아님)
 	@PatchMapping(value = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
 	@PreAuthorize("isAuthenticated()")
 	public UserMeResponse patchMe(

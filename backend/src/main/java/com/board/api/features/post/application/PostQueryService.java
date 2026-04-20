@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PostQueryService {
 
+	// 목록 API에서 과도한 page size로 DB 부하 나지 않도록 상한
 	private static final int MAX_PAGE_SIZE = 100;
 
 	private final PostRepository postRepository;
@@ -37,6 +38,7 @@ public class PostQueryService {
 	private final PostLikeRepository postLikeRepository;
 	private final PostViewService postViewService;
 
+	// readOnly=true: Hibernate 등 JPA가 읽기 전용 최적화(플러시 생략 등) 가능
 	@Transactional(readOnly = true)
 	public Post getById(long postId) {
 		return postRepository.findById(postId)
@@ -54,6 +56,7 @@ public class PostQueryService {
 
 	@Transactional(readOnly = true)
 	public PostResponse buildResponse(Post post, Long viewerUserId) {
+		// 상세 화면 외에서도 재사용: 조회수는 저장소에서 읽음
 		long views = postViewService.getCount(post.getId());
 		return buildResponse(post, viewerUserId, views);
 	}
@@ -64,6 +67,7 @@ public class PostQueryService {
 		List<PostImageResponse> images = imageResponsesForPost(postId);
 		long likes = postLikeRepository.countByPostId(postId);
 		long comments = commentRepository.countByPostId(postId);
+		// 비로그인 viewerUserId==null 이면 liked는 항상 false
 		boolean liked = viewerUserId != null
 				&& postLikeRepository.existsByPostIdAndUserId(postId, viewerUserId);
 		return PostResponse.from(post, images, likes, comments, liked, viewCount);
@@ -83,6 +87,7 @@ public class PostQueryService {
 	@Transactional(readOnly = true)
 	public PostCursorPageResponse listPostsByCursor(String cursorEncoded, int size, Long viewerUserId) {
 		int limit = clampPageSize(size);
+		// limit+1개를 가져와 마지막 1건이 있으면 "다음 페이지 있음" 판단
 		int fetch = limit + 1;
 		Pageable pageable = PageRequest.of(0, fetch);
 
@@ -91,6 +96,7 @@ public class PostQueryService {
 			chunk = postRepository.findAllByOrderByCreatedAtDescIdDesc(pageable).getContent();
 		}
 		else {
+			// 커서 문자열 → (createdAt, postId) 복원 후 그보다 "더 옛날" 글만 조회
 			PostCursorCodec.Cursor c = PostCursorCodec.decode(cursorEncoded);
 			chunk = postRepository.findOlderThan(c.createdAt(), c.postId(), pageable);
 		}
@@ -103,6 +109,7 @@ public class PostQueryService {
 			nextCursor = PostCursorCodec.encode(last.getCreatedAt(), last.getId());
 		}
 
+		// N+1 쿼리 방지: 목록에 대해 좋아요/댓글/조회수를 배치로 조회
 		List<PostResponse> mapped = mapPostsWithBatchAggregates(page, viewerUserId);
 		return new PostCursorPageResponse(mapped, nextCursor, mapped.size(), hasMore);
 	}
@@ -133,6 +140,7 @@ public class PostQueryService {
 		return Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
 	}
 
+	// JPA @Query에서 Object[] (postId, cnt) 형태로 돌아온 결과를 Map으로 변환
 	private static Map<Long, Long> toCountMap(List<Object[]> rows) {
 		Map<Long, Long> m = new HashMap<>();
 		if (rows == null) {
