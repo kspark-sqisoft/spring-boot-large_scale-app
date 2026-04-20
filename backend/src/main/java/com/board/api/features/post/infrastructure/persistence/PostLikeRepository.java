@@ -17,9 +17,11 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
 	void deleteByPostIdAndUserId(long postId, long userId);
 
+	// 목록 화면용 배치 집계: (postId, likeCount) 행 목록
 	@Query("select pl.postId, count(pl) from PostLike pl where pl.postId in :ids group by pl.postId")
 	List<Object[]> countGroupedByPostId(@Param("ids") Collection<Long> ids);
 
+	// 로그인 사용자가 이 목록 중 어떤 글에 좋아요를 눌렀는지 한 번에 조회
 	@Query("select pl.postId from PostLike pl where pl.userId = :userId and pl.postId in :ids")
 	List<Long> findPostIdsLikedByUser(@Param("userId") long userId, @Param("ids") Collection<Long> ids);
 }

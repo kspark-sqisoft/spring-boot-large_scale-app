@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+// Redis 없을 때 PostViewService 대체 구현 — 조회수는 항상 0으로 표시
 @Service
 @ConditionalOnProperty(name = "app.redis.enabled", havingValue = "false", matchIfMissing = true)
 public class NoopPostViewService implements PostViewService {

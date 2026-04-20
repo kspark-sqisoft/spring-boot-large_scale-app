@@ -30,6 +30,7 @@ public class CommentCommandService {
 	private final UserRepository userRepository;
 	private final SnowflakeIdGenerator idGenerator;
 
+	// 루트 댓글 또는 1-depth 답글만 허용 (대댓글의 대댓글 방지)
 	@Transactional
 	public CommentResponse create(long postId, long authorUserId, CreateCommentRequest request) {
 		if (!postRepository.existsById(postId)) {
@@ -39,6 +40,7 @@ public class CommentCommandService {
 		String body = request.content().trim();
 		Comment saved;
 		if (parentId == null) {
+			// parent 없음 → 최상위 댓글
 			saved = Comment.createRoot(idGenerator.nextId(), postId, authorUserId, body);
 		}
 		else {
@@ -69,6 +71,7 @@ public class CommentCommandService {
 	public CommentResponse update(long postId, long commentId, long authorUserId, UpdateCommentRequest request) {
 		Comment comment = commentRepository.findById(commentId)
 				.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."));
+		// URL의 postId와 댓글의 postId가 다르면 404로 통일 (정보 누설 최소화)
 		if (!comment.getPostId().equals(postId)) {
 			throw new ApiException(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다.");
 		}
@@ -94,6 +97,7 @@ public class CommentCommandService {
 		commentRepository.delete(comment);
 	}
 
+	// API 응답에 작성자 닉네임(또는 이메일 앞부분)을 포함
 	private CommentResponse toResponse(Comment comment) {
 		Long authorUserId = Objects.requireNonNull(comment.getAuthorUserId(), "authorUserId");
 		User author = userRepository.findById(authorUserId)
@@ -104,6 +108,7 @@ public class CommentCommandService {
 		return CommentResponse.from(comment, authorDto);
 	}
 
+	// 클라이언트가 parentCommentId를 비우면 null = 루트 댓글
 	private static Long parseOptionalLongId(String raw) {
 		if (raw == null || raw.isBlank()) {
 			return null;

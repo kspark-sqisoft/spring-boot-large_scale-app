@@ -16,13 +16,16 @@ import com.board.api.common.exception.ApiException;
  * <p>
  * 이전 형식 {@code epochMillis:postId} 도 디코드만 호환합니다.
  */
+// 유틸 클래스: 컨트롤러가 아닌 순수 함수 모음 — Spring Bean 아님
 public final class PostCursorCodec {
 
 	private PostCursorCodec() {
 	}
 
 	public static String encode(Instant createdAt, long postId) {
+		// 나노초까지 포함해야 동일 시각에 여러 글이 있어도 키셋 페이지가 비지 않음
 		String raw = createdAt.getEpochSecond() + ":" + createdAt.getNano() + ":" + postId;
+		// URL 쿼리에 넣기 쉬운 Base64url (패딩 없음)
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(raw.getBytes(StandardCharsets.UTF_8));
 	}
 
@@ -41,6 +44,7 @@ public final class PostCursorCodec {
 				return new Cursor(Instant.ofEpochSecond(sec, nano), id);
 			}
 			if (parts.length == 2) {
+				// 구버전 호환: 밀리초만 있던 커서
 				long millis = Long.parseLong(parts[0]);
 				long id = Long.parseLong(parts[1]);
 				return new Cursor(Instant.ofEpochMilli(millis), id);
@@ -52,6 +56,7 @@ public final class PostCursorCodec {
 		}
 	}
 
+	// 커서 한 덩어리: "이 시각·이 id보다 더 옛날 글" 경계
 	public record Cursor(Instant createdAt, long postId) {
 	}
 }

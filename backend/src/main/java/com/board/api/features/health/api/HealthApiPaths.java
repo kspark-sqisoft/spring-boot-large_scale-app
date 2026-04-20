@@ -4,6 +4,7 @@ package com.board.api.features.health.api;
 public final class HealthApiPaths {
 
 	public static final String BASE = "/api/v1";
+	// HealthController에서 @GetMapping(BASE의 일부로 조합) — 전체 경로는 /api/v1/health
 	public static final String HEALTH = "/health";
 
 	private HealthApiPaths() {

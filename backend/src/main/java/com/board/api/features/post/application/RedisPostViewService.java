@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
+// StringRedisTemplate: Redis에 문자열 값으로 카운터 저장(INCR)
 @Service
 @ConditionalOnProperty(name = "app.redis.enabled", havingValue = "true")
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class RedisPostViewService implements PostViewService {
 
 	@Override
 	public long incrementAndGet(long postId) {
+		// INCR: 원자적으로 +1 후 새 값 반환
 		Long v = redis.opsForValue().increment(key(postId));
 		return v != null ? v : 0L;
 	}
@@ -39,6 +41,7 @@ public class RedisPostViewService implements PostViewService {
 		}
 		List<Long> ordered = new ArrayList<>(postIds);
 		List<String> keys = ordered.stream().map(this::key).toList();
+		// MGET에 가까운 배치 조회 — 루프마다 GET 하지 않음
 		List<String> vals = redis.opsForValue().multiGet(keys);
 		Map<Long, Long> out = new HashMap<>();
 		for (int i = 0; i < ordered.size(); i++) {

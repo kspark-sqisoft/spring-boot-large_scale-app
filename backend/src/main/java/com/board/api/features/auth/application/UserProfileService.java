@@ -12,6 +12,7 @@ import com.board.api.features.file.domain.StoredFile;
 import com.board.api.features.file.infrastructure.persistence.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 
+// /users/me 조회·수정 — User 엔티티와 API DTO 사이의 조립/검증 담당
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
@@ -30,6 +31,7 @@ public class UserProfileService {
 	public UserMeResponse updateProfile(long userId, String displayName, String avatarFileIdRaw) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다."));
+		// PATCH 스타일: 둘 다 null이면 변경 없이 현재 상태 반환
 		if (displayName == null && avatarFileIdRaw == null) {
 			return UserMeResponse.fromUser(user);
 		}
@@ -38,6 +40,7 @@ public class UserProfileService {
 		}
 		if (avatarFileIdRaw != null) {
 			if (avatarFileIdRaw.isBlank()) {
+				// 빈 문자열이면 아바타 제거
 				user.setAvatarFileId(null);
 			}
 			else {

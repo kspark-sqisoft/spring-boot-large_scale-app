@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.board.api.features.auth.domain.User;
 
+// 로그인/회원가입 직후 컨트롤러에 넘기는 값 묶음 — record compact constructor로 null 방지
 public record SessionIssue(
 		User user,
 		String accessToken,

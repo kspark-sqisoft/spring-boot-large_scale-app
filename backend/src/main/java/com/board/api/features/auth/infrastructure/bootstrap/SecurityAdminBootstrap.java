@@ -17,6 +17,7 @@ import com.board.api.features.auth.infrastructure.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 /** 개발 편의: 설정된 최초 관리자 계정이 없으면 기동 시 한 번 생성 */
+// ApplicationRunner: 애플리케이션 기동 완료 후 run() 한 번 실행
 @Component
 @Order(100)
 @ConditionalOnProperty(name = "app.security.bootstrap-admin", havingValue = "true")
@@ -34,6 +35,7 @@ public class SecurityAdminBootstrap implements ApplicationRunner {
 				.trim()
 				.toLowerCase();
 		if (userRepository.existsByEmail(email)) {
+			// 이미 계정이 있으면 아무 것도 하지 않음(멱등)
 			return;
 		}
 		String rawPassword = Objects.requireNonNull(properties.getInitialAdminPassword(), "initialAdminPassword");

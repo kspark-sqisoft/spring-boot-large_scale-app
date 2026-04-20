@@ -36,10 +36,12 @@ public class CommentQueryService {
 		if (!postRepository.existsById(postId)) {
 			throw new ApiException(HttpStatus.NOT_FOUND, "POST_NOT_FOUND", "게시글을 찾을 수 없습니다.");
 		}
+		// 작성순 정렬 — 프론트에서 parentId 기준으로 트리 UI 구성 가능
 		List<Comment> rows = commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
 		if (rows.isEmpty()) {
 			return new CommentListResponse(List.of());
 		}
+		// 댓글 N개에 대한 작성자 정보를 한 번에 조회 (N+1 방지)
 		Set<Long> authorIds = rows.stream()
 				.map(Comment::getAuthorUserId)
 				.map(id -> Objects.requireNonNull(id, "authorUserId"))
@@ -52,6 +54,7 @@ public class CommentQueryService {
 		return new CommentListResponse(comments);
 	}
 
+	// 사용자 row가 없으면(데이터 불일치) 안전한 플레이스홀더
 	private static CommentAuthorResponse toAuthor(User user) {
 		if (user == null) {
 			return new CommentAuthorResponse("0", "(알 수 없음)");

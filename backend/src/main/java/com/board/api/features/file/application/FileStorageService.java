@@ -26,8 +26,10 @@ import jakarta.annotation.PostConstruct;
 @Service
 public class FileStorageService {
 
+	// 업로드 한 장당 최대 크기 (바이트)
 	private static final long MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+	// 브라우저가 보낸 Content-Type 화이트리스트 (실제 바이너리 시그니처 검사는 생략 — 운영에서는 magick 등 고려)
 	private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
 			"image/jpeg",
 			"image/png",
@@ -42,16 +44,19 @@ public class FileStorageService {
 			FileStorageProperties properties,
 			StoredFileRepository storedFileRepository,
 			SnowflakeIdGenerator idGenerator) {
+		// normalize: ".." 등 제거해 절대 경로 기준 루트 고정
 		this.rootDirectory = Path.of(properties.getDir()).toAbsolutePath().normalize();
 		this.storedFileRepository = storedFileRepository;
 		this.idGenerator = idGenerator;
 	}
 
+	// Bean 생성 직후 한 번 실행 — 업로드 루트 디렉터리가 없으면 생성
 	@PostConstruct
 	void ensureRootExists() throws IOException {
 		Files.createDirectories(rootDirectory);
 	}
 
+	// DB 메타데이터 + 디스크 파일을 같은 트랜잭션 경계에서 다룸(메타만 롤백되면 고아 파일 가능 — 운영에서는 정리 잡 고려)
 	@Transactional
 	public StoredFile storeImage(long ownerUserId, MultipartFile multipart) {
 		if (multipart == null || multipart.isEmpty()) {
@@ -69,9 +74,11 @@ public class FileStorageService {
 		}
 		String original = sanitizeOriginalName(multipart.getOriginalFilename());
 		long fileId = idGenerator.nextId();
+		// 사용자별 하위 폴더로 분산 저장
 		String relative = ownerUserId + "/" + fileId + "_" + original;
 		Path target = rootDirectory.resolve(relative).normalize();
 		if (!target.startsWith(rootDirectory)) {
+			// 경로 조작(..)으로 루트 밖 쓰기 방지
 			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PATH", "잘못된 저장 경로입니다.");
 		}
 		try {
@@ -95,10 +102,12 @@ public class FileStorageService {
 		return storedFileRepository.save(entity);
 	}
 
+	// 다운로드 컨트롤러에서 실제 파일 시스템 경로 조합
 	public Path resolveAbsolutePath(StoredFile file) {
 		return rootDirectory.resolve(file.getStorageRelativePath()).normalize();
 	}
 
+	// 경로 구분자·특수문자 제거로 OS·웹에서 안전한 파일명만 남김
 	private static String sanitizeOriginalName(String name) {
 		if (name == null || name.isBlank()) {
 			return "image";

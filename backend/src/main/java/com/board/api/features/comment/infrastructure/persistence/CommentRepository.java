@@ -15,6 +15,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
 	long countByPostId(long postId);
 
+	// 게시글 여러 개에 대한 댓글 수 집계 — PostQueryService에서 Map으로 변환
 	@Query("select c.postId, count(c) from Comment c where c.postId in :ids group by c.postId")
 	List<Object[]> countGroupedByPostId(@Param("ids") Collection<Long> ids);
 }
