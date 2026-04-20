@@ -1,6 +1,7 @@
 package com.board.api.features.auth.api;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.http.ResponseCookie;
@@ -31,12 +32,14 @@ public final class AuthCookie {
 	}
 
 	public static ResponseCookie refreshCookie(String rawToken, JwtTokenProvider jwtTokenProvider) {
-		long maxAgeSeconds = jwtTokenProvider.getRefreshExpirationDays() * 24 * 60 * 60;
-		return ResponseCookie.from(REFRESH_COOKIE_NAME, rawToken)
+		String token = Objects.requireNonNull(rawToken, "rawToken");
+		long maxAgeSeconds = jwtTokenProvider.getRefreshExpirationDays() * 24L * 60L * 60L;
+		Duration maxAge = Duration.ofSeconds(maxAgeSeconds);
+		return ResponseCookie.from(REFRESH_COOKIE_NAME, token)
 				.httpOnly(true)
 				.secure(false)
 				.path("/api/v1/auth")
-				.maxAge(Duration.ofSeconds(maxAgeSeconds))
+				.maxAge(maxAge)
 				.sameSite("Lax")
 				.build();
 	}

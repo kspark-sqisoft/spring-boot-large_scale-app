@@ -1,5 +1,7 @@
 package com.board.api.common.exception;
 
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
 		String message = ex.getBindingResult().getFieldErrors().stream()
-				.map(f -> f.getField() + ": " + f.getDefaultMessage())
+				.map(f -> f.getField() + ": " + Objects.requireNonNullElse(f.getDefaultMessage(), ""))
 				.reduce((a, b) -> a + "; " + b)
 				.orElse("Validation failed");
 		return ResponseEntity
@@ -28,8 +30,8 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(ApiException.class)
 	public ResponseEntity<ErrorResponse> handleApiException(ApiException ex) {
 		return ResponseEntity
-				.status(ex.getStatus())
-				.body(ErrorResponse.of(ex.getCode(), ex.getMessage()));
+				.status(Objects.requireNonNull(ex.getStatus()))
+				.body(ErrorResponse.of(ex.getCode(), Objects.requireNonNullElse(ex.getMessage(), "")));
 	}
 
 	@ExceptionHandler(Exception.class)

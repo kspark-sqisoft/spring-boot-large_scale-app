@@ -1,5 +1,7 @@
 package com.board.api.features.comment.application;
 
+import java.util.Objects;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +51,7 @@ public class CommentCommandService {
 			saved = Comment.createRoot(idGenerator.nextId(), postId, authorUserId, body);
 		}
 		else {
-			Comment parent = commentRepository.findById(parentId)
+			Comment parent = commentRepository.findById(Objects.requireNonNull(parentId, "parentId"))
 					.orElseThrow(() -> new ApiException(
 							HttpStatus.NOT_FOUND,
 							"PARENT_COMMENT_NOT_FOUND",
@@ -102,7 +104,8 @@ public class CommentCommandService {
 	}
 
 	private CommentResponse toResponse(Comment comment) {
-		User author = userRepository.findById(comment.getAuthorUserId())
+		Long authorUserId = Objects.requireNonNull(comment.getAuthorUserId(), "authorUserId");
+		User author = userRepository.findById(authorUserId)
 				.orElseThrow(() -> new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHOR_NOT_FOUND", "작성자 정보를 찾을 수 없습니다."));
 		CommentAuthorResponse authorDto = new CommentAuthorResponse(
 				Long.toString(author.getId()),

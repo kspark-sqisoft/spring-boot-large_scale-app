@@ -19,6 +19,30 @@ import {
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 
+function useBlobUrlPreview(file: File | null): string | null {
+  const [url, setUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!file) {
+      const id = requestAnimationFrame(() => {
+        setUrl(null)
+      })
+      return () => cancelAnimationFrame(id)
+    }
+
+    const objectUrl = URL.createObjectURL(file)
+    const id = requestAnimationFrame(() => {
+      setUrl(objectUrl)
+    })
+    return () => {
+      cancelAnimationFrame(id)
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [file])
+
+  return url
+}
+
 // `/users/me` GET/PATCH + 아바타 업로드 후 zustand user 동기화
 
 const meQueryKey = ['users', 'me'] as const
@@ -28,32 +52,21 @@ export function ProfilePage() {
   const setUser = useAuthStore((s) => s.setUser)
   const [displayName, setDisplayName] = useState('')
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
-  const [pendingAvatarPreview, setPendingAvatarPreview] = useState<string | null>(
-    null,
-  )
+  const pendingAvatarPreview = useBlobUrlPreview(pendingAvatarFile)
 
   const { data: me, isPending, isError } = useQuery({
     queryKey: meQueryKey,
     queryFn: fetchCurrentUser,
   })
 
-  useEffect(() => {
-    if (me) {
+  const [appliedMeSyncToken, setAppliedMeSyncToken] = useState('')
+  if (me) {
+    const nextMeSyncToken = `${me.id}\u0000${me.displayName}`
+    if (nextMeSyncToken !== appliedMeSyncToken) {
+      setAppliedMeSyncToken(nextMeSyncToken)
       setDisplayName(me.displayName)
     }
-  }, [me])
-
-  useEffect(() => {
-    if (!pendingAvatarFile) {
-      setPendingAvatarPreview(null)
-      return
-    }
-    const url = URL.createObjectURL(pendingAvatarFile)
-    setPendingAvatarPreview(url)
-    return () => {
-      URL.revokeObjectURL(url)
-    }
-  }, [pendingAvatarFile])
+  }
 
   const saveMutation = useMutation({
     mutationFn: async () => {

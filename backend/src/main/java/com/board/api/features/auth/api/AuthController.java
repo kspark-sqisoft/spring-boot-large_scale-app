@@ -1,5 +1,7 @@
 package com.board.api.features.auth.api;
 
+import java.util.Objects;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,8 +58,13 @@ public class AuthController {
 		return ResponseEntity.ok()
 				.header(
 						HttpHeaders.SET_COOKIE,
-						AuthCookie.refreshCookie(issue.rawRefreshToken(), jwtTokenProvider).toString())
-				.body(AccessTokenResponse.of(issue.accessToken(), issue.expiresInSeconds()));
+						AuthCookie.refreshCookie(
+										Objects.requireNonNull(issue.rawRefreshToken(), "rawRefreshToken"),
+										jwtTokenProvider)
+								.toString())
+				.body(AccessTokenResponse.of(
+						Objects.requireNonNull(issue.accessToken(), "accessToken"),
+						issue.expiresInSeconds()));
 	}
 
 	@PostMapping("/logout")
@@ -71,10 +78,13 @@ public class AuthController {
 	private ResponseEntity<AuthSessionResponse> sessionResponse(
 			com.board.api.features.auth.application.SessionIssue issue,
 			HttpStatus status) {
-		return ResponseEntity.status(status)
+		return ResponseEntity.status(Objects.requireNonNull(status, "status"))
 				.header(
 						HttpHeaders.SET_COOKIE,
-						AuthCookie.refreshCookie(issue.rawRefreshToken(), jwtTokenProvider).toString())
-				.body(AuthSessionResponse.from(issue));
+						AuthCookie.refreshCookie(
+										Objects.requireNonNull(issue.rawRefreshToken(), "rawRefreshToken"),
+										jwtTokenProvider)
+								.toString())
+				.body(AuthSessionResponse.from(Objects.requireNonNull(issue, "issue")));
 	}
 }

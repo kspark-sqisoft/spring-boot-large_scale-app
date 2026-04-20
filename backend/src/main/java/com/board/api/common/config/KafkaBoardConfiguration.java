@@ -2,6 +2,7 @@ package com.board.api.common.config;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -38,35 +39,39 @@ public class KafkaBoardConfiguration {
 
 	@Bean
 	public KafkaAdmin kafkaAdmin(KafkaBoardProperties properties) {
+		String bootstrapServers = Objects.requireNonNull(properties.bootstrapServers(), "bootstrapServers");
 		Map<String, Object> config = new HashMap<>();
-		config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, properties.bootstrapServers());
-		return new KafkaAdmin(config);
+		config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+		return new KafkaAdmin(Objects.requireNonNull(config));
 	}
 
 	@Bean
 	public ProducerFactory<String, String> kafkaProducerFactory(KafkaBoardProperties properties) {
+		String bootstrapServers = Objects.requireNonNull(properties.bootstrapServers(), "bootstrapServers");
 		Map<String, Object> config = new HashMap<>();
-		config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.bootstrapServers());
+		config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 		config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 		config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 		config.put(ProducerConfig.ACKS_CONFIG, "1");
-		return new DefaultKafkaProducerFactory<>(config);
+		return new DefaultKafkaProducerFactory<>(Objects.requireNonNull(config));
 	}
 
 	@Bean
 	public KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> kafkaProducerFactory) {
-		return new KafkaTemplate<>(kafkaProducerFactory);
+		return new KafkaTemplate<>(Objects.requireNonNull(kafkaProducerFactory, "kafkaProducerFactory"));
 	}
 
 	@Bean
 	public ConsumerFactory<String, String> kafkaConsumerFactory(KafkaBoardProperties properties) {
+		String bootstrapServers = Objects.requireNonNull(properties.bootstrapServers(), "bootstrapServers");
+		String consumerGroup = Objects.requireNonNull(properties.consumerGroup(), "consumerGroup");
 		Map<String, Object> config = new HashMap<>();
-		config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.bootstrapServers());
-		config.put(ConsumerConfig.GROUP_ID_CONFIG, properties.consumerGroup());
+		config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+		config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
 		config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-		return new DefaultKafkaConsumerFactory<>(config);
+		return new DefaultKafkaConsumerFactory<>(Objects.requireNonNull(config));
 	}
 
 	@Bean
@@ -74,7 +79,7 @@ public class KafkaBoardConfiguration {
 			ConsumerFactory<String, String> kafkaConsumerFactory) {
 		ConcurrentKafkaListenerContainerFactory<String, String> factory =
 				new ConcurrentKafkaListenerContainerFactory<>();
-		factory.setConsumerFactory(kafkaConsumerFactory);
+		factory.setConsumerFactory(Objects.requireNonNull(kafkaConsumerFactory, "kafkaConsumerFactory"));
 		factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
 		return factory;
 	}

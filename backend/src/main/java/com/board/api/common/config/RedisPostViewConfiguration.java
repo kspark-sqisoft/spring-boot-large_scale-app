@@ -1,5 +1,7 @@
 package com.board.api.common.config;
 
+import java.util.Objects;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -18,13 +20,14 @@ public class RedisPostViewConfiguration {
 	@Bean
 	public LettuceConnectionFactory redisConnectionFactory(RedisViewProperties properties) {
 		RedisStandaloneConfiguration cfg = new RedisStandaloneConfiguration();
-		cfg.setHostName(properties.host());
+		cfg.setHostName(Objects.requireNonNull(properties.host(), "host"));
 		cfg.setPort(properties.port());
 		return new LettuceConnectionFactory(cfg);
 	}
 
 	@Bean
 	public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
-		return new StringRedisTemplate(connectionFactory);
+		return new StringRedisTemplate(
+				Objects.requireNonNull(connectionFactory, "connectionFactory"));
 	}
 }

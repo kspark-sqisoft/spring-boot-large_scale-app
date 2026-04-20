@@ -1,5 +1,7 @@
 package com.board.api.features.auth.infrastructure.bootstrap;
 
+import java.util.Objects;
+
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -37,14 +39,17 @@ public class SecurityAdminBootstrap implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) {
-		String email = properties.getInitialAdminEmail().trim().toLowerCase();
+		String email = Objects.requireNonNull(properties.getInitialAdminEmail(), "initialAdminEmail")
+				.trim()
+				.toLowerCase();
 		if (userRepository.existsByEmail(email)) {
 			return;
 		}
+		String rawPassword = Objects.requireNonNull(properties.getInitialAdminPassword(), "initialAdminPassword");
 		User admin = User.create(
 				idGenerator.nextId(),
 				email,
-				passwordEncoder.encode(properties.getInitialAdminPassword()),
+				passwordEncoder.encode(rawPassword),
 				UserRole.ADMIN);
 		userRepository.save(admin);
 	}

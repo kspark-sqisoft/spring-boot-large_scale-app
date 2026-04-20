@@ -9,7 +9,6 @@ import com.board.api.features.auth.api.dto.UserMeResponse;
 import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
 import com.board.api.features.file.domain.StoredFile;
-import com.board.api.features.file.api.FileApiPaths;
 import com.board.api.features.file.infrastructure.persistence.StoredFileRepository;
 
 @Service

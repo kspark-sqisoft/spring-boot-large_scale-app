@@ -2,6 +2,7 @@ package com.board.api.features.auth.application;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -55,7 +56,7 @@ public class AuthService {
 		User user = User.create(
 				idGenerator.nextId(),
 				normalized,
-				passwordEncoder.encode(password),
+				passwordEncoder.encode(Objects.requireNonNull(password, "password")),
 				UserRole.USER);
 		userRepository.save(user);
 		return issueSession(user);
@@ -66,7 +67,9 @@ public class AuthService {
 		String normalized = email.trim().toLowerCase();
 		try {
 			authenticationManager.authenticate(
-					new UsernamePasswordAuthenticationToken(normalized, password));
+					new UsernamePasswordAuthenticationToken(
+							normalized,
+							Objects.requireNonNull(password, "password")));
 		}
 		catch (BadCredentialsException ex) {
 			throw new ApiException(

@@ -2,6 +2,7 @@ package com.board.api.features.comment.application;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,10 @@ public class CommentQueryService {
 		if (rows.isEmpty()) {
 			return new CommentListResponse(List.of());
 		}
-		Set<Long> authorIds = rows.stream().map(Comment::getAuthorUserId).collect(Collectors.toSet());
+		Set<Long> authorIds = rows.stream()
+				.map(Comment::getAuthorUserId)
+				.map(id -> Objects.requireNonNull(id, "authorUserId"))
+				.collect(Collectors.toSet());
 		Map<Long, User> byId = userRepository.findAllById(authorIds).stream()
 				.collect(Collectors.toMap(User::getId, u -> u));
 		List<CommentResponse> comments = rows.stream()

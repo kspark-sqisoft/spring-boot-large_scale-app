@@ -2,6 +2,7 @@ package com.board.api.features.file.api;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -42,10 +43,12 @@ public class FileDownloadController {
 		if (!Files.isRegularFile(path)) {
 			throw new ApiException(HttpStatus.NOT_FOUND, "FILE_MISSING", "저장소에서 파일을 찾을 수 없습니다.");
 		}
-		Resource body = new FileSystemResource(path.toFile());
+		Resource body = new FileSystemResource(Objects.requireNonNull(path.toFile()));
+		String contentType = Objects.requireNonNull(meta.getContentType(), "contentType");
+		String originalName = Objects.requireNonNull(meta.getOriginalName(), "originalName");
 		return ResponseEntity.ok()
-				.contentType(MediaType.parseMediaType(meta.getContentType()))
-				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + meta.getOriginalName() + "\"")
+				.contentType(MediaType.parseMediaType(contentType))
+				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + originalName + "\"")
 				.body(body);
 	}
 }
