@@ -7,8 +7,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
 @Table(name = "posts")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Post {
 
 	@Id
@@ -29,18 +37,6 @@ public class Post {
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
 
-	protected Post() {
-	}
-
-	public Post(Long id, Long authorUserId, String title, String content, Instant createdAt, Instant updatedAt) {
-		this.id = id;
-		this.authorUserId = authorUserId;
-		this.title = title;
-		this.content = content;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-	}
-
 	public static Post create(Long id, String title, String content) {
 		return create(id, null, title, content);
 	}
@@ -48,30 +44,6 @@ public class Post {
 	public static Post create(Long id, Long authorUserId, String title, String content) {
 		Instant now = Instant.now();
 		return new Post(id, authorUserId, title, content, now, now);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getAuthorUserId() {
-		return authorUserId;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public String getContent() {
-		return content;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
-	}
-
-	public Instant getUpdatedAt() {
-		return updatedAt;
 	}
 
 	public void setTitle(String title) {

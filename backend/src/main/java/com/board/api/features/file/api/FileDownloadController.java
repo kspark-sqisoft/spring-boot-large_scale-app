@@ -19,21 +19,16 @@ import com.board.api.common.exception.ApiException;
 import com.board.api.features.file.application.FileStorageService;
 import com.board.api.features.file.domain.StoredFile;
 import com.board.api.features.file.infrastructure.persistence.StoredFileRepository;
+import lombok.RequiredArgsConstructor;
 
 /** 업로드된 파일 ID로 디스크 리소스 스트리밍(GET은 SecurityConfig에서 permitAll) */
 @RestController
 @RequestMapping(FileApiPaths.FILES)
+@RequiredArgsConstructor
 public class FileDownloadController {
 
 	private final StoredFileRepository storedFileRepository;
 	private final FileStorageService fileStorageService;
-
-	public FileDownloadController(
-			StoredFileRepository storedFileRepository,
-			FileStorageService fileStorageService) {
-		this.storedFileRepository = storedFileRepository;
-		this.fileStorageService = fileStorageService;
-	}
 
 	@GetMapping("/{fileId}")
 	public ResponseEntity<Resource> download(@PathVariable long fileId) {

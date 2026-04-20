@@ -9,21 +9,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.domain.UserRole;
+import lombok.RequiredArgsConstructor;
 
 /** Spring Security 주체: userId·역할(ROLE_USER/ROLE_ADMIN)을 컨트롤러·{@code @PreAuthorize}에 노출 */
+@RequiredArgsConstructor
 public class AppUserDetails implements UserDetails {
 
 	private final Long userId;
 	private final String email;
 	private final String passwordHash;
 	private final UserRole role;
-
-	public AppUserDetails(Long userId, String email, String passwordHash, UserRole role) {
-		this.userId = userId;
-		this.email = email;
-		this.passwordHash = passwordHash;
-		this.role = role;
-	}
 
 	public static AppUserDetails fromUser(User user) {
 		return new AppUserDetails(user.getId(), user.getEmail(), user.getPasswordHash(), user.getRole());

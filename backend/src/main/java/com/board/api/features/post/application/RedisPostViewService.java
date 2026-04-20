@@ -10,17 +10,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @ConditionalOnProperty(name = "app.redis.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public class RedisPostViewService implements PostViewService {
 
 	private static final String KEY_PREFIX = "board:views:post:";
 
 	private final StringRedisTemplate redis;
-
-	public RedisPostViewService(StringRedisTemplate redis) {
-		this.redis = redis;
-	}
 
 	@Override
 	public long incrementAndGet(long postId) {

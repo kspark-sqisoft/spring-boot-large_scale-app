@@ -13,16 +13,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 /** 로그인은 됐으나 역할·권한 부족일 때 403 JSON */
 @Component
+@RequiredArgsConstructor
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
 
 	private final ObjectMapper objectMapper;
-
-	public RestAccessDeniedHandler(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
 
 	@Override
 	public void handle(

@@ -7,8 +7,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
 @Table(name = "post_comments")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Comment {
 
 	@Id
@@ -32,20 +40,6 @@ public class Comment {
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
 
-	protected Comment() {
-	}
-
-	public Comment(Long id, Long postId, Long parentId, Long authorUserId, String content, Instant createdAt,
-			Instant updatedAt) {
-		this.id = id;
-		this.postId = postId;
-		this.parentId = parentId;
-		this.authorUserId = authorUserId;
-		this.content = content;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-	}
-
 	public static Comment createRoot(long id, long postId, long authorUserId, String content) {
 		Instant now = Instant.now();
 		return new Comment(id, postId, null, authorUserId, content, now, now);
@@ -54,34 +48,6 @@ public class Comment {
 	public static Comment createReply(long id, long postId, long parentId, long authorUserId, String content) {
 		Instant now = Instant.now();
 		return new Comment(id, postId, parentId, authorUserId, content, now, now);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getPostId() {
-		return postId;
-	}
-
-	public Long getParentId() {
-		return parentId;
-	}
-
-	public Long getAuthorUserId() {
-		return authorUserId;
-	}
-
-	public String getContent() {
-		return content;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
-	}
-
-	public Instant getUpdatedAt() {
-		return updatedAt;
 	}
 
 	public void setContent(String content) {

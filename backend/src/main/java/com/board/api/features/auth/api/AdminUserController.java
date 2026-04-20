@@ -11,20 +11,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.board.api.features.auth.api.dto.UserPageResponse;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
+import lombok.RequiredArgsConstructor;
 
 /** 관리자 전용 사용자 목록 페이징 */
 @RestController
 @RequestMapping("/api/v1/admin")
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AdminUserController {
 
 	private static final int MAX_PAGE_SIZE = 100;
 
 	private final UserRepository userRepository;
-
-	public AdminUserController(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
 
 	@GetMapping("/users")
 	public UserPageResponse listUsers(

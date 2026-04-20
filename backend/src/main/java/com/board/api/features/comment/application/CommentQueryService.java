@@ -20,23 +20,16 @@ import com.board.api.features.comment.api.dto.CommentResponse;
 import com.board.api.features.comment.domain.Comment;
 import com.board.api.features.comment.infrastructure.persistence.CommentRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
+import lombok.RequiredArgsConstructor;
 
 /** 게시글별 댓글 트리·작성자 요약 조회 */
 @Service
+@RequiredArgsConstructor
 public class CommentQueryService {
 
 	private final PostRepository postRepository;
 	private final CommentRepository commentRepository;
 	private final UserRepository userRepository;
-
-	public CommentQueryService(
-			PostRepository postRepository,
-			CommentRepository commentRepository,
-			UserRepository userRepository) {
-		this.postRepository = postRepository;
-		this.commentRepository = commentRepository;
-		this.userRepository = userRepository;
-	}
 
 	@Transactional(readOnly = true)
 	public CommentListResponse listForPost(long postId) {

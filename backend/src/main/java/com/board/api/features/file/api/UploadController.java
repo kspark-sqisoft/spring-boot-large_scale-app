@@ -12,17 +12,15 @@ import org.springframework.web.multipart.MultipartFile;
 import com.board.api.common.security.AppUserDetails;
 import com.board.api.features.file.api.dto.UploadResponse;
 import com.board.api.features.file.application.FileStorageService;
+import lombok.RequiredArgsConstructor;
 
 /** 인증 사용자 이미지 업로드 → 저장 후 {@code /api/v1/files/{id}} 로 노출 */
 @RestController
 @RequestMapping(FileApiPaths.UPLOADS)
+@RequiredArgsConstructor
 public class UploadController {
 
 	private final FileStorageService fileStorageService;
-
-	public UploadController(FileStorageService fileStorageService) {
-		this.fileStorageService = fileStorageService;
-	}
 
 	@PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("isAuthenticated()")

@@ -9,8 +9,16 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
 @Table(name = "users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class User {
 
 	@Id
@@ -38,55 +46,9 @@ public class User {
 	@Column(name = "avatar_file_id")
 	private Long avatarFileId;
 
-	protected User() {
-	}
-
-	public User(
-			Long id,
-			String email,
-			String passwordHash,
-			UserRole role,
-			Instant createdAt,
-			Instant updatedAt,
-			String displayName,
-			Long avatarFileId) {
-		this.id = id;
-		this.email = email;
-		this.passwordHash = passwordHash;
-		this.role = role;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-		this.displayName = displayName;
-		this.avatarFileId = avatarFileId;
-	}
-
 	public static User create(Long id, String email, String passwordHash, UserRole role) {
 		Instant now = Instant.now();
 		return new User(id, email, passwordHash, role, now, now, null, null);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public String getPasswordHash() {
-		return passwordHash;
-	}
-
-	public UserRole getRole() {
-		return role;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
-	}
-
-	public Instant getUpdatedAt() {
-		return updatedAt;
 	}
 
 	public void setPasswordHash(String passwordHash) {
@@ -97,16 +59,8 @@ public class User {
 		this.updatedAt = Instant.now();
 	}
 
-	public String getDisplayName() {
-		return displayName;
-	}
-
 	public void setDisplayName(String displayName) {
 		this.displayName = displayName;
-	}
-
-	public Long getAvatarFileId() {
-		return avatarFileId;
 	}
 
 	public void setAvatarFileId(Long avatarFileId) {

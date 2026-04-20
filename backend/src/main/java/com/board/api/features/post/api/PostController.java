@@ -35,10 +35,12 @@ import com.board.api.features.post.application.PostQueryService;
 import com.board.api.features.post.application.PostViewEventPublisher;
 import com.board.api.features.post.application.PostViewService;
 import com.board.api.features.post.domain.Post;
+import lombok.RequiredArgsConstructor;
 
 /** 게시글 CRUD·목록(커서)·인기·조회수·좋아요. 조회는 대부분 공개, 쓰기는 인증 필요. */
 @RestController
 @RequestMapping(PostApiPaths.BASE)
+@RequiredArgsConstructor
 public class PostController {
 
 	private final PostCommandService postCommandService;
@@ -47,21 +49,6 @@ public class PostController {
 	private final PostViewService postViewService;
 	private final PostViewEventPublisher postViewEventPublisher;
 	private final PopularPostsQueryService popularPostsQueryService;
-
-	public PostController(
-			PostCommandService postCommandService,
-			PostQueryService postQueryService,
-			PostLikeCommandService postLikeCommandService,
-			PostViewService postViewService,
-			PostViewEventPublisher postViewEventPublisher,
-			PopularPostsQueryService popularPostsQueryService) {
-		this.postCommandService = postCommandService;
-		this.postQueryService = postQueryService;
-		this.postLikeCommandService = postLikeCommandService;
-		this.postViewService = postViewService;
-		this.postViewEventPublisher = postViewEventPublisher;
-		this.popularPostsQueryService = popularPostsQueryService;
-	}
 
 	@PostMapping
 	@PreAuthorize("isAuthenticated()")

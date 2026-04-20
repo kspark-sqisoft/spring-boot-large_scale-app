@@ -22,19 +22,16 @@ import com.board.api.features.comment.api.dto.CreateCommentRequest;
 import com.board.api.features.comment.api.dto.UpdateCommentRequest;
 import com.board.api.features.comment.application.CommentCommandService;
 import com.board.api.features.comment.application.CommentQueryService;
+import lombok.RequiredArgsConstructor;
 
 /** 특정 게시글 하위 댓글: 목록은 공개, 쓰기·수정·삭제는 로그인 필요 */
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
+@RequiredArgsConstructor
 public class CommentController {
 
 	private final CommentCommandService commentCommandService;
 	private final CommentQueryService commentQueryService;
-
-	public CommentController(CommentCommandService commentCommandService, CommentQueryService commentQueryService) {
-		this.commentCommandService = commentCommandService;
-		this.commentQueryService = commentQueryService;
-	}
 
 	@GetMapping
 	public CommentListResponse list(@PathVariable long postId) {

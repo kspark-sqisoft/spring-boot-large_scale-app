@@ -7,15 +7,13 @@ import org.springframework.stereotype.Service;
 
 import com.board.api.common.security.AppUserDetails;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class AppUserDetailsService implements UserDetailsService {
 
 	private final UserRepository userRepository;
-
-	public AppUserDetailsService(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

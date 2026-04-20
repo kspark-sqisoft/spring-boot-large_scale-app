@@ -8,10 +8,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
 @Table(
 		name = "post_likes",
 		uniqueConstraints = @UniqueConstraint(name = "uk_post_likes_post_user", columnNames = { "post_id", "user_id" }))
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class PostLike {
 
 	@Id
@@ -25,30 +33,4 @@ public class PostLike {
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
-
-	protected PostLike() {
-	}
-
-	public PostLike(Long id, Long postId, Long userId, Instant createdAt) {
-		this.id = id;
-		this.postId = postId;
-		this.userId = userId;
-		this.createdAt = createdAt;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getPostId() {
-		return postId;
-	}
-
-	public Long getUserId() {
-		return userId;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
-	}
 }

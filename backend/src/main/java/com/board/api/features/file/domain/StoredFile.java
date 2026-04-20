@@ -7,8 +7,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
 @Table(name = "stored_files")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class StoredFile {
 
 	@Id
@@ -31,52 +39,4 @@ public class StoredFile {
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
-
-	protected StoredFile() {
-	}
-
-	public StoredFile(
-			Long id,
-			Long ownerUserId,
-			String contentType,
-			String originalName,
-			long sizeBytes,
-			String storageRelativePath,
-			Instant createdAt) {
-		this.id = id;
-		this.ownerUserId = ownerUserId;
-		this.contentType = contentType;
-		this.originalName = originalName;
-		this.sizeBytes = sizeBytes;
-		this.storageRelativePath = storageRelativePath;
-		this.createdAt = createdAt;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getOwnerUserId() {
-		return ownerUserId;
-	}
-
-	public String getContentType() {
-		return contentType;
-	}
-
-	public String getOriginalName() {
-		return originalName;
-	}
-
-	public long getSizeBytes() {
-		return sizeBytes;
-	}
-
-	public String getStorageRelativePath() {
-		return storageRelativePath;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
-	}
 }

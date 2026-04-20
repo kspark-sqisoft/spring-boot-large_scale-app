@@ -22,20 +22,17 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 요청마다 {@code Authorization: Bearer} 액세스 JWT를 검증하고, 성공 시 {@link SecurityContextHolder}에 사용자를 넣습니다.
  */
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final ObjectMapper objectMapper;
-
-	public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, ObjectMapper objectMapper) {
-		this.jwtTokenProvider = jwtTokenProvider;
-		this.objectMapper = objectMapper;
-	}
 
 	@Override
 	protected void doFilterInternal(

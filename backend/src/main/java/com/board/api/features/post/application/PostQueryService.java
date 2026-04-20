@@ -22,9 +22,11 @@ import com.board.api.features.post.domain.Post;
 import com.board.api.features.post.infrastructure.persistence.PostImageRepository;
 import com.board.api.features.post.infrastructure.persistence.PostLikeRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
+import lombok.RequiredArgsConstructor;
 
 /** 게시글 조회·목록(커서)·응답 DTO 조립(작성자·이미지·좋아요·댓글 수 등) */
 @Service
+@RequiredArgsConstructor
 public class PostQueryService {
 
 	private static final int MAX_PAGE_SIZE = 100;
@@ -34,19 +36,6 @@ public class PostQueryService {
 	private final CommentRepository commentRepository;
 	private final PostLikeRepository postLikeRepository;
 	private final PostViewService postViewService;
-
-	public PostQueryService(
-			PostRepository postRepository,
-			PostImageRepository postImageRepository,
-			CommentRepository commentRepository,
-			PostLikeRepository postLikeRepository,
-			PostViewService postViewService) {
-		this.postRepository = postRepository;
-		this.postImageRepository = postImageRepository;
-		this.commentRepository = commentRepository;
-		this.postLikeRepository = postLikeRepository;
-		this.postViewService = postViewService;
-	}
 
 	@Transactional(readOnly = true)
 	public Post getById(long postId) {

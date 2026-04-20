@@ -10,17 +10,14 @@ import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
 import com.board.api.features.file.domain.StoredFile;
 import com.board.api.features.file.infrastructure.persistence.StoredFileRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class UserProfileService {
 
 	private final UserRepository userRepository;
 	private final StoredFileRepository storedFileRepository;
-
-	public UserProfileService(UserRepository userRepository, StoredFileRepository storedFileRepository) {
-		this.userRepository = userRepository;
-		this.storedFileRepository = storedFileRepository;
-	}
 
 	@Transactional(readOnly = true)
 	public UserMeResponse getMe(long userId) {

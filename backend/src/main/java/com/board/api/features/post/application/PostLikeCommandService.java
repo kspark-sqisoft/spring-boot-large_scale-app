@@ -2,8 +2,6 @@ package com.board.api.features.post.application;
 
 import java.time.Instant;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,24 +13,17 @@ import com.board.api.features.post.api.dto.PostLikeStatusResponse;
 import com.board.api.features.post.domain.PostLike;
 import com.board.api.features.post.infrastructure.persistence.PostLikeRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class PostLikeCommandService {
-
-	private static final Logger log = LoggerFactory.getLogger(PostLikeCommandService.class);
 
 	private final PostRepository postRepository;
 	private final PostLikeRepository postLikeRepository;
 	private final SnowflakeIdGenerator idGenerator;
-
-	public PostLikeCommandService(
-			PostRepository postRepository,
-			PostLikeRepository postLikeRepository,
-			SnowflakeIdGenerator idGenerator) {
-		this.postRepository = postRepository;
-		this.postLikeRepository = postLikeRepository;
-		this.idGenerator = idGenerator;
-	}
 
 	@Transactional
 	public PostLikeStatusResponse like(long postId, long userId) {

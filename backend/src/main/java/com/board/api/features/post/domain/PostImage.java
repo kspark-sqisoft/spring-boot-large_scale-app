@@ -5,8 +5,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
 @Table(name = "post_images")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class PostImage {
 
 	@Id
@@ -20,30 +28,4 @@ public class PostImage {
 
 	@Column(name = "sort_order", nullable = false)
 	private int sortOrder;
-
-	protected PostImage() {
-	}
-
-	public PostImage(Long id, Long postId, Long fileId, int sortOrder) {
-		this.id = id;
-		this.postId = postId;
-		this.fileId = fileId;
-		this.sortOrder = sortOrder;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getPostId() {
-		return postId;
-	}
-
-	public Long getFileId() {
-		return fileId;
-	}
-
-	public int getSortOrder() {
-		return sortOrder;
-	}
 }

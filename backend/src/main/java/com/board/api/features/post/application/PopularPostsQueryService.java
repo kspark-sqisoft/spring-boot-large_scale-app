@@ -15,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.board.api.features.post.api.dto.PostResponse;
 import com.board.api.features.post.domain.Post;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class PopularPostsQueryService {
 
 	private static final int MAX_LIMIT = 50;
@@ -24,15 +26,6 @@ public class PopularPostsQueryService {
 	private final PostRepository postRepository;
 	private final PostQueryService postQueryService;
 	private final ObjectProvider<StringRedisTemplate> redisTemplate;
-
-	public PopularPostsQueryService(
-			PostRepository postRepository,
-			PostQueryService postQueryService,
-			ObjectProvider<StringRedisTemplate> redisTemplate) {
-		this.postRepository = postRepository;
-		this.postQueryService = postQueryService;
-		this.redisTemplate = redisTemplate;
-	}
 
 	@Transactional(readOnly = true)
 	public List<PostResponse> listPopular(int limit, Long viewerUserId) {

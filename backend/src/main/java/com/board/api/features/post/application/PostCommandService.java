@@ -15,26 +15,17 @@ import com.board.api.features.post.domain.PostImage;
 import com.board.api.features.post.infrastructure.persistence.PostImageRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
 import com.board.api.features.file.infrastructure.persistence.StoredFileRepository;
+import lombok.RequiredArgsConstructor;
 
 /** 게시글·첨부 이미지 연결의 트랜잭션 단위 변경(생성·수정·삭제) */
 @Service
+@RequiredArgsConstructor
 public class PostCommandService {
 
 	private final PostRepository postRepository;
 	private final PostImageRepository postImageRepository;
 	private final StoredFileRepository storedFileRepository;
 	private final SnowflakeIdGenerator idGenerator;
-
-	public PostCommandService(
-			PostRepository postRepository,
-			PostImageRepository postImageRepository,
-			StoredFileRepository storedFileRepository,
-			SnowflakeIdGenerator idGenerator) {
-		this.postRepository = postRepository;
-		this.postImageRepository = postImageRepository;
-		this.storedFileRepository = storedFileRepository;
-		this.idGenerator = idGenerator;
-	}
 
 	@Transactional
 	public Post create(long ownerUserId, String title, String content, List<Long> imageFileIds) {

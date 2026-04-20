@@ -20,19 +20,16 @@ import com.board.api.features.auth.application.AuthService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /** 회원가입·로그인·토큰 갱신·로그아웃. 리프레시는 HttpOnly 쿠키, 액세스는 응답 본문(Bearer). */
 @RestController
 @RequestMapping(AuthApiPaths.BASE)
+@RequiredArgsConstructor
 public class AuthController {
 
 	private final AuthService authService;
 	private final JwtTokenProvider jwtTokenProvider;
-
-	public AuthController(AuthService authService, JwtTokenProvider jwtTokenProvider) {
-		this.authService = authService;
-		this.jwtTokenProvider = jwtTokenProvider;
-	}
 
 	@PostMapping("/register")
 	public ResponseEntity<AuthSessionResponse> register(@Valid @RequestBody RegisterRequest request) {

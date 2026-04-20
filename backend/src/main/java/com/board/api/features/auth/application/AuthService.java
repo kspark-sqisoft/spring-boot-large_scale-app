@@ -18,9 +18,11 @@ import com.board.api.common.security.JwtTokenProvider;
 import com.board.api.features.auth.domain.User;
 import com.board.api.features.auth.domain.UserRole;
 import com.board.api.features.auth.infrastructure.persistence.UserRepository;
+import lombok.RequiredArgsConstructor;
 
 /** 회원·비밀번호·세션 발급: 액세스 JWT + DB에 해시 저장된 리프레시 토큰 */
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -31,21 +33,6 @@ public class AuthService {
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RefreshTokenService refreshTokenService;
 	private final SnowflakeIdGenerator idGenerator;
-
-	public AuthService(
-			UserRepository userRepository,
-			PasswordEncoder passwordEncoder,
-			AuthenticationManager authenticationManager,
-			JwtTokenProvider jwtTokenProvider,
-			RefreshTokenService refreshTokenService,
-			SnowflakeIdGenerator idGenerator) {
-		this.userRepository = userRepository;
-		this.passwordEncoder = passwordEncoder;
-		this.authenticationManager = authenticationManager;
-		this.jwtTokenProvider = jwtTokenProvider;
-		this.refreshTokenService = refreshTokenService;
-		this.idGenerator = idGenerator;
-	}
 
 	@Transactional
 	public SessionIssue register(String email, String password) {

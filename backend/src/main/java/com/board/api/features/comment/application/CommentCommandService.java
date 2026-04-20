@@ -18,26 +18,17 @@ import com.board.api.features.comment.api.dto.UpdateCommentRequest;
 import com.board.api.features.comment.domain.Comment;
 import com.board.api.features.comment.infrastructure.persistence.CommentRepository;
 import com.board.api.features.post.infrastructure.persistence.PostRepository;
+import lombok.RequiredArgsConstructor;
 
 /** 댓글 생성·수정·삭제(게시글 존재·작성자 검증 포함) */
 @Service
+@RequiredArgsConstructor
 public class CommentCommandService {
 
 	private final PostRepository postRepository;
 	private final CommentRepository commentRepository;
 	private final UserRepository userRepository;
 	private final SnowflakeIdGenerator idGenerator;
-
-	public CommentCommandService(
-			PostRepository postRepository,
-			CommentRepository commentRepository,
-			UserRepository userRepository,
-			SnowflakeIdGenerator idGenerator) {
-		this.postRepository = postRepository;
-		this.commentRepository = commentRepository;
-		this.userRepository = userRepository;
-		this.idGenerator = idGenerator;
-	}
 
 	@Transactional
 	public CommentResponse create(long postId, long authorUserId, CreateCommentRequest request) {

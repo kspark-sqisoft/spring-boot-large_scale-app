@@ -15,17 +15,15 @@ import com.board.api.features.auth.api.dto.UserMeResponse;
 import com.board.api.features.auth.application.UserProfileService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /** 현재 로그인 사용자 프로필 조회·수정({@code /me}) */
 @RestController
 @RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
 public class UserProfileController {
 
 	private final UserProfileService userProfileService;
-
-	public UserProfileController(UserProfileService userProfileService) {
-		this.userProfileService = userProfileService;
-	}
 
 	@GetMapping("/me")
 	@PreAuthorize("isAuthenticated()")
