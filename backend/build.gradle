@@ -3,6 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.13'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'jacoco'
+	id 'com.adarshr.test-logger' version '4.0.0'
 }
 
 group = 'com.board'
@@ -47,6 +48,14 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 	finalizedBy jacocoTestReport
+}
+
+// 터미널에서 클래스·메서드별 통과/실패를 트리 형태로 표시 (HTML 리포트와 병행)
+testlogger {
+	theme 'standard'
+	showPassed true
+	showSkipped true
+	showFailed true
 }
 
 jacoco {

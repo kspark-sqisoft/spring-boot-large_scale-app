@@ -26,6 +26,47 @@ import com.board.api.features.file.infrastructure.persistence.StoredFileReposito
 @ExtendWith(MockitoExtension.class)
 class FileStorageServiceTest {
 
+    /** Content-Type과 일치하는 최소 매직 바이트 (서비스의 시그니처 검증 통과용) */
+    private static byte[] minimalJpegPayload(int size) {
+        byte[] b = new byte[Math.max(size, 3)];
+        b[0] = (byte) 0xFF;
+        b[1] = (byte) 0xD8;
+        b[2] = (byte) 0xFF;
+        return b;
+    }
+
+    private static byte[] minimalPngPayload(int size) {
+        byte[] sig = {
+            (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+        };
+        byte[] b = new byte[Math.max(size, sig.length)];
+        System.arraycopy(sig, 0, b, 0, sig.length);
+        return b;
+    }
+
+    private static byte[] minimalGifPayload(int size) {
+        byte[] b = new byte[Math.max(size, 4)];
+        b[0] = 'G';
+        b[1] = 'I';
+        b[2] = 'F';
+        b[3] = '8';
+        return b;
+    }
+
+    private static byte[] minimalWebpPayload(int size) {
+        int n = Math.max(size, 12);
+        byte[] b = new byte[n];
+        b[0] = 'R';
+        b[1] = 'I';
+        b[2] = 'F';
+        b[3] = 'F';
+        b[8] = 'W';
+        b[9] = 'E';
+        b[10] = 'B';
+        b[11] = 'P';
+        return b;
+    }
+
     @TempDir Path tempDir;
 
     @Mock StoredFileRepository storedFileRepository;
@@ -47,7 +88,7 @@ class FileStorageServiceTest {
         when(storedFileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         MockMultipartFile file = new MockMultipartFile(
-                "file", "photo.jpg", "image/jpeg", new byte[100]);
+                "file", "photo.jpg", "image/jpeg", minimalJpegPayload(100));
 
         StoredFile result = service.storeImage(42L, file);
 
@@ -95,7 +136,14 @@ class FileStorageServiceTest {
         when(storedFileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         for (String type : new String[]{"image/jpeg", "image/png", "image/gif", "image/webp"}) {
-            MockMultipartFile file = new MockMultipartFile("file", "img", type, new byte[10]);
+            byte[] payload = switch (type) {
+                case "image/jpeg" -> minimalJpegPayload(10);
+                case "image/png" -> minimalPngPayload(10);
+                case "image/gif" -> minimalGifPayload(10);
+                case "image/webp" -> minimalWebpPayload(12);
+                default -> throw new IllegalStateException(type);
+            };
+            MockMultipartFile file = new MockMultipartFile("file", "img", type, payload);
             StoredFile result = service.storeImage(42L, file);
             assertThat(result.getContentType()).isEqualTo(type);
         }
@@ -107,7 +155,7 @@ class FileStorageServiceTest {
         when(storedFileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         MockMultipartFile file = new MockMultipartFile(
-                "file", "my file (1).jpg", "image/png", new byte[10]);
+                "file", "my file (1).jpg", "image/png", minimalPngPayload(10));
 
         StoredFile result = service.storeImage(42L, file);
 
@@ -121,7 +169,7 @@ class FileStorageServiceTest {
         when(storedFileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         MockMultipartFile file = new MockMultipartFile(
-                "file", "photo.png", "image/png", new byte[10]);
+                "file", "photo.png", "image/png", minimalPngPayload(10));
         StoredFile stored = service.storeImage(42L, file);
 
         Path resolved = service.resolveAbsolutePath(stored);
