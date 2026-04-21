@@ -64,7 +64,7 @@ export function ProfilePage() {
     const nextMeSyncToken = `${me.id}\u0000${me.displayName}`
     if (nextMeSyncToken !== appliedMeSyncToken) {
       setAppliedMeSyncToken(nextMeSyncToken)
-      setDisplayName(me.displayName)
+      setDisplayName(me.displayName ?? '')
     }
   }
 

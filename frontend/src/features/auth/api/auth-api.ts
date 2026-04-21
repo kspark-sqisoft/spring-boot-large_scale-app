@@ -2,6 +2,7 @@ import { buildApiUrl, HttpError } from '@/shared/api/client'
 import { getJson } from '@/shared/api/client'
 import { useAuthStore } from '@/shared/store/auth-store'
 
+import { AuthSessionResponseSchema } from '../model/auth.types'
 import type { AuthSessionResponse, UserMeResponse } from '../model/auth.types'
 
 // 로그인/가입은 공용 client를 쓰지 않고 직접 fetch(무한 refresh 방지·쿠키 Set-Cookie 수신)
@@ -35,7 +36,7 @@ export async function loginRequest(
   if (!res.ok) {
     throw await parseHttpError(res)
   }
-  const data = (await res.json()) as AuthSessionResponse
+  const data = AuthSessionResponseSchema.parse(await res.json())
   useAuthStore.getState().setSession(data.accessToken, data.user)
   return data
 }
@@ -56,7 +57,7 @@ export async function registerRequest(
   if (!res.ok) {
     throw await parseHttpError(res)
   }
-  const data = (await res.json()) as AuthSessionResponse
+  const data = AuthSessionResponseSchema.parse(await res.json())
   useAuthStore.getState().setSession(data.accessToken, data.user)
   return data
 }

@@ -6,12 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.board.api.common.config.FileStorageProperties;
@@ -29,12 +29,20 @@ public class FileStorageService {
 	// 업로드 한 장당 최대 크기 (바이트)
 	private static final long MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-	// 브라우저가 보낸 Content-Type 화이트리스트 (실제 바이너리 시그니처 검사는 생략 — 운영에서는 magick 등 고려)
 	private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
 			"image/jpeg",
 			"image/png",
 			"image/gif",
 			"image/webp");
+
+	// 각 포맷의 매직 바이트 시그니처 (Content-Type 위조 방지)
+	private static final byte[] SIG_JPEG  = { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF };
+	private static final byte[] SIG_PNG   = { (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+	private static final byte[] SIG_GIF   = { 0x47, 0x49, 0x46, 0x38 }; // GIF8
+	// WebP: bytes[0..3]="RIFF", bytes[8..11]="WEBP"
+	private static final byte[] SIG_RIFF  = { 0x52, 0x49, 0x46, 0x46 };
+	private static final byte[] SIG_WEBP  = { 0x57, 0x45, 0x42, 0x50 };
+	private static final int    MAGIC_READ_BYTES = 12;
 
 	private final Path rootDirectory;
 	private final StoredFileRepository storedFileRepository;
@@ -56,8 +64,13 @@ public class FileStorageService {
 		Files.createDirectories(rootDirectory);
 	}
 
-	// DB 메타데이터 + 디스크 파일을 같은 트랜잭션 경계에서 다룸(메타만 롤백되면 고아 파일 가능 — 운영에서는 정리 잡 고려)
-	@Transactional
+	/**
+	 * 이미지를 디스크에 저장하고 DB에 메타데이터를 기록한다.
+	 *
+	 * 순서: 검증 → 디스크 쓰기 → DB 저장
+	 * DB 저장 실패 시 디스크 파일을 정리해 고아 파일 발생을 방지한다.
+	 * (@Transactional 제거: DB 트랜잭션으로 디스크 I/O를 감쌀 수 없기 때문)
+	 */
 	public StoredFile storeImage(long ownerUserId, MultipartFile multipart) {
 		if (multipart == null || multipart.isEmpty()) {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "FILE_EMPTY", "파일이 비어 있습니다.");
@@ -72,39 +85,89 @@ public class FileStorageService {
 					"INVALID_IMAGE_TYPE",
 					"허용 형식: JPEG, PNG, GIF, WebP");
 		}
+
+		// 매직 바이트 검증: Content-Type 위조 방지
+		byte[] header;
+		byte[] fullBytes;
+		try (InputStream in = multipart.getInputStream()) {
+			fullBytes = in.readAllBytes();
+		}
+		catch (IOException ex) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "FILE_READ_FAILED", "파일을 읽을 수 없습니다.");
+		}
+		header = Arrays.copyOf(fullBytes, Math.min(fullBytes.length, MAGIC_READ_BYTES));
+		if (!isValidImageSignature(contentType.toLowerCase(Locale.ROOT), header)) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_IMAGE_SIGNATURE", "파일 형식이 Content-Type과 일치하지 않습니다.");
+		}
+
 		String original = sanitizeOriginalName(multipart.getOriginalFilename());
 		long fileId = idGenerator.nextId();
-		// 사용자별 하위 폴더로 분산 저장
 		String relative = ownerUserId + "/" + fileId + "_" + original;
 		Path target = rootDirectory.resolve(relative).normalize();
 		if (!target.startsWith(rootDirectory)) {
-			// 경로 조작(..)으로 루트 밖 쓰기 방지
 			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PATH", "잘못된 저장 경로입니다.");
 		}
+
+		// 1단계: 디스크에 먼저 쓴다
 		try {
 			Files.createDirectories(target.getParent());
-			try (InputStream in = multipart.getInputStream()) {
-				Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
-			}
+			Files.write(target, fullBytes);
 		}
 		catch (IOException ex) {
 			throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "FILE_WRITE_FAILED", "파일 저장에 실패했습니다.");
 		}
-		Instant now = Instant.now();
-		StoredFile entity = new StoredFile(
-				fileId,
-				ownerUserId,
-				contentType,
-				original,
-				multipart.getSize(),
-				relative,
-				now);
-		return storedFileRepository.save(entity);
+
+		// 2단계: DB에 메타데이터 저장 — 실패 시 디스크 파일 정리
+		try {
+			StoredFile entity = new StoredFile(
+					fileId,
+					ownerUserId,
+					contentType,
+					original,
+					multipart.getSize(),
+					relative,
+					Instant.now());
+			return storedFileRepository.save(entity);
+		}
+		catch (Exception ex) {
+			try {
+				Files.deleteIfExists(target);
+			}
+			catch (IOException ignored) {
+				// 정리 실패는 로그로만 — 원래 예외를 우선 전파
+			}
+			throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "FILE_METADATA_FAILED", "파일 메타데이터 저장에 실패했습니다.");
+		}
 	}
 
 	// 다운로드 컨트롤러에서 실제 파일 시스템 경로 조합
 	public Path resolveAbsolutePath(StoredFile file) {
 		return rootDirectory.resolve(file.getStorageRelativePath()).normalize();
+	}
+
+	// 매직 바이트로 실제 이미지 형식 검증 (Content-Type 위조 방지)
+	private static boolean isValidImageSignature(String contentType, byte[] header) {
+		return switch (contentType) {
+			case "image/jpeg" -> startsWith(header, SIG_JPEG);
+			case "image/png"  -> startsWith(header, SIG_PNG);
+			case "image/gif"  -> startsWith(header, SIG_GIF);
+			case "image/webp" -> header.length >= 12
+					&& startsWith(header, SIG_RIFF)
+					&& Arrays.equals(Arrays.copyOfRange(header, 8, 12), SIG_WEBP);
+			default -> false;
+		};
+	}
+
+	private static boolean startsWith(byte[] data, byte[] prefix) {
+		if (data.length < prefix.length) {
+			return false;
+		}
+		for (int i = 0; i < prefix.length; i++) {
+			if (data[i] != prefix[i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	// 경로 구분자·특수문자 제거로 OS·웹에서 안전한 파일명만 남김

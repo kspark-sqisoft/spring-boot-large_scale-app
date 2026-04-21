@@ -40,7 +40,7 @@ public final class AuthCookie {
 				.secure(false)
 				.path("/api/v1/auth")
 				.maxAge(maxAge)
-				.sameSite("Lax")
+				.sameSite("Strict")
 				.build();
 	}
 
@@ -50,7 +50,7 @@ public final class AuthCookie {
 				.secure(false)
 				.path("/api/v1/auth")
 				.maxAge(0)
-				.sameSite("Lax")
+				.sameSite("Strict")
 				.build();
 	}
 }

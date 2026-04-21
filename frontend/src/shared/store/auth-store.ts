@@ -1,13 +1,8 @@
 import { create } from 'zustand'
 
-// 메모리의 액세스 토큰 + 프로필(리프레시는 HttpOnly 쿠키라 JS에서 안 보임)
-export type AuthUser = {
-  id: string
-  email: string
-  role: string
-  displayName: string
-  avatarUrl: string | null
-}
+import type { AuthUser } from '@/features/auth/model/auth.types'
+
+export type { AuthUser }
 
 type AuthState = {
   accessToken: string | null

@@ -3,49 +3,80 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Editorial/Minimal design direction ──────────────────────────────
+   * 따뜻한 오프화이트 + 차콜 텍스트 (라이트)
+   * 따뜻한 다크그레이 (다크) — 순수 검정 배제
+   * Slate 계열 accent — 신뢰감·가독성 우선
+   * ──────────────────────────────────────────────────────────────────── */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* 배경: 순수 흰색 대신 따뜻한 오프화이트 */
+    --background: 220 20% 97%;
+    --foreground: 220 13% 11%;
+
+    /* 카드: 배경보다 약간 밝은 흰색 — 미묘한 깊이 */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 220 13% 11%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --popover-foreground: 220 13% 11%;
+
+    /* primary: 딥 슬레이트 차콜 */
+    --primary: 220 13% 13%;
+    --primary-foreground: 220 20% 97%;
+
+    /* secondary: 연한 슬레이트 */
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 220 13% 13%;
+
+    /* muted: 음소거 톤 */
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 9% 44%;
+
+    /* accent: hover·선택 상태 슬레이트 */
+    --accent: 220 14% 91%;
+    --accent-foreground: 220 13% 13%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 220 13% 13%;
+
+    /* editorial은 날카로운 편 — 살짝만 둥글게 */
+    --radius: 0.375rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    /* 배경: 순수 검정 대신 따뜻한 다크그레이 */
+    --background: 220 13% 9%;
+    --foreground: 220 14% 93%;
+
+    /* 카드: 배경보다 약간 밝은 서피스 */
+    --card: 220 13% 11%;
+    --card-foreground: 220 14% 93%;
+
+    --popover: 220 13% 11%;
+    --popover-foreground: 220 14% 93%;
+
+    --primary: 220 14% 93%;
+    --primary-foreground: 220 13% 9%;
+
+    --secondary: 220 13% 17%;
+    --secondary-foreground: 220 14% 93%;
+
+    --muted: 220 13% 17%;
+    --muted-foreground: 220 9% 56%;
+
+    --accent: 220 13% 19%;
+    --accent-foreground: 220 14% 93%;
+
+    --destructive: 0 62% 42%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+
+    --border: 220 13% 20%;
+    --input: 220 13% 20%;
+    --ring: 220 14% 75%;
   }
 }
 
